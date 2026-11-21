@@ -1,0 +1,101 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Outdoor Brief",
+        "description": "The daily outdoor brief: tides for now, then marine weather, moon and garden in later versions. All tide data comes from the Marées France integration (SHOM), installed separately: Outdoor Brief never fetches it from the Internet itself.\n\nVersion 0.1 offers the coastal profile only. The garden profile (frost, rain, moon phase) comes in 0.5.",
+        "data": {
+          "profile": "Profile"
+        },
+        "data_description": {
+          "profile": "What the brief is about. Garden and Both will appear here in a later version."
+        }
+      },
+      "port": {
+        "title": "Port",
+        "description": "Choose the Marées France port (one port = one Marées France device). Add another Outdoor Brief entry for each extra port.",
+        "data": {
+          "port_device_id": "Marées France port"
+        },
+        "data_description": {
+          "port_device_id": "Only devices created by the Marées France integration are listed."
+        }
+      },
+      "settings": {
+        "title": "Settings",
+        "description": "These settings can be changed later from the integration options.",
+        "data": {
+          "spring_tide_threshold": "Spring tide threshold (coefficient)",
+          "admin_notify_target": "Admin phone (optional)"
+        },
+        "data_description": {
+          "spring_tide_threshold": "A day counts as a spring tide when its highest coefficient reaches this value. 100 is the usual convention; lower it to be told about strong tides more often (December 2026 peaks at 99, for example).",
+          "admin_notify_target": "A notify.mobile_app_* service or a notify entity from the Companion app. Pre-filled with the phone already chosen in another SDR integration, if any. Used for notifications from version 0.3."
+        }
+      }
+    },
+    "error": {
+      "invalid_target": "Enter a notify service or entity, e.g. notify.mobile_app_my_phone."
+    },
+    "abort": {
+      "already_configured": "This port is already configured.",
+      "marees_france_missing": "Outdoor Brief reads tides from the Marées France integration. Install it (HACS or Marketplace) and add at least one port first."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Settings",
+        "description": "These settings can be changed later from the integration options.",
+        "data": {
+          "spring_tide_threshold": "Spring tide threshold (coefficient)",
+          "admin_notify_target": "Admin phone (optional)"
+        },
+        "data_description": {
+          "spring_tide_threshold": "A day counts as a spring tide when its highest coefficient reaches this value. 100 is the usual convention; lower it to be told about strong tides more often (December 2026 peaks at 99, for example).",
+          "admin_notify_target": "A notify.mobile_app_* service or a notify entity from the Companion app. Pre-filled with the phone already chosen in another SDR integration, if any. Used for notifications from version 0.3."
+        }
+      }
+    },
+    "error": {
+      "invalid_target": "Enter a notify service or entity, e.g. notify.mobile_app_my_phone."
+    }
+  },
+  "selector": {
+    "profile": {
+      "options": {
+        "coastal": "Coastal"
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "daily_summary": {
+        "name": "Daily summary"
+      },
+      "tidal_range": {
+        "name": "Tidal range"
+      },
+      "tide_twelfth": {
+        "name": "Tide twelfth"
+      },
+      "next_spring_tide": {
+        "name": "Next spring tide"
+      },
+      "admin_phone": {
+        "name": "Admin phone"
+      }
+    }
+  },
+  "exceptions": {
+    "marees_france_unavailable": {
+      "message": "The Marées France integration is not loaded: its actions are unavailable."
+    },
+    "marees_france_error": {
+      "message": "Marées France action {service} failed: {error}"
+    },
+    "no_tide_data": {
+      "message": "Marées France returned no tide for this port."
+    }
+  }
+}

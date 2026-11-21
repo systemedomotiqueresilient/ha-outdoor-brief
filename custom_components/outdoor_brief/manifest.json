@@ -1,0 +1,18 @@
+{
+  "domain": "outdoor_brief",
+  "name": "Outdoor Brief",
+  "after_dependencies": [
+    "marees_france"
+  ],
+  "codeowners": [
+    "@systemedomotiqueresilient"
+  ],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/systemedomotiqueresilient/ha-outdoor-brief",
+  "integration_type": "service",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/systemedomotiqueresilient/ha-outdoor-brief/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

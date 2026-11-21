@@ -1,0 +1,101 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Outdoor Brief",
+        "description": "Le résumé du jour pour ce qui se passe dehors : les marées pour l'instant, puis la météo marine, la lune et le potager dans les versions suivantes. Toutes les données de marée viennent de l'intégration Marées France (SHOM), installée à part : Outdoor Brief ne les récupère jamais lui-même sur Internet.\n\nLa version 0.1 ne propose que le profil littoral. Le profil potager (gel, pluie, phase de la lune) arrive en 0.5.",
+        "data": {
+          "profile": "Profil"
+        },
+        "data_description": {
+          "profile": "Ce dont parle le résumé. Potager et Les deux apparaîtront ici dans une prochaine version."
+        }
+      },
+      "port": {
+        "title": "Port",
+        "description": "Choisissez le port Marées France (un port = un appareil Marées France). Ajoutez une autre entrée Outdoor Brief pour chaque port supplémentaire.",
+        "data": {
+          "port_device_id": "Port Marées France"
+        },
+        "data_description": {
+          "port_device_id": "Seuls les appareils créés par l'intégration Marées France sont proposés."
+        }
+      },
+      "settings": {
+        "title": "Réglages",
+        "description": "Ces réglages restent modifiables ensuite, depuis les options de l'intégration.",
+        "data": {
+          "spring_tide_threshold": "Seuil des grandes marées (coefficient)",
+          "admin_notify_target": "Téléphone admin (facultatif)"
+        },
+        "data_description": {
+          "spring_tide_threshold": "Un jour compte comme grande marée quand son plus fort coefficient atteint cette valeur. 100 est la convention habituelle ; baissez-le pour être prévenu plus souvent des fortes marées (décembre 2026 culmine à 99, par exemple).",
+          "admin_notify_target": "Un service notify.mobile_app_* ou une entité notify de l'application Companion. Prérempli avec le téléphone déjà choisi dans une autre intégration SDR, s'il y en a un. Servira aux notifications à partir de la version 0.3."
+        }
+      }
+    },
+    "error": {
+      "invalid_target": "Indiquez un service ou une entité notify, par exemple notify.mobile_app_mon_telephone."
+    },
+    "abort": {
+      "already_configured": "Ce port est déjà configuré.",
+      "marees_france_missing": "Outdoor Brief lit les marées dans l'intégration Marées France. Installez-la d'abord (HACS ou Marketplace) et ajoutez au moins un port."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Réglages",
+        "description": "Ces réglages restent modifiables ensuite, depuis les options de l'intégration.",
+        "data": {
+          "spring_tide_threshold": "Seuil des grandes marées (coefficient)",
+          "admin_notify_target": "Téléphone admin (facultatif)"
+        },
+        "data_description": {
+          "spring_tide_threshold": "Un jour compte comme grande marée quand son plus fort coefficient atteint cette valeur. 100 est la convention habituelle ; baissez-le pour être prévenu plus souvent des fortes marées (décembre 2026 culmine à 99, par exemple).",
+          "admin_notify_target": "Un service notify.mobile_app_* ou une entité notify de l'application Companion. Prérempli avec le téléphone déjà choisi dans une autre intégration SDR, s'il y en a un. Servira aux notifications à partir de la version 0.3."
+        }
+      }
+    },
+    "error": {
+      "invalid_target": "Indiquez un service ou une entité notify, par exemple notify.mobile_app_mon_telephone."
+    }
+  },
+  "selector": {
+    "profile": {
+      "options": {
+        "coastal": "Littoral"
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "daily_summary": {
+        "name": "Résumé du jour"
+      },
+      "tidal_range": {
+        "name": "Marnage"
+      },
+      "tide_twelfth": {
+        "name": "Douzième de marée"
+      },
+      "next_spring_tide": {
+        "name": "Prochaine grande marée"
+      },
+      "admin_phone": {
+        "name": "Téléphone admin"
+      }
+    }
+  },
+  "exceptions": {
+    "marees_france_unavailable": {
+      "message": "L'intégration Marées France n'est pas chargée : ses actions sont indisponibles."
+    },
+    "marees_france_error": {
+      "message": "L'action Marées France {service} a échoué : {error}"
+    },
+    "no_tide_data": {
+      "message": "Marées France n'a renvoyé aucune marée pour ce port."
+    }
+  }
+}

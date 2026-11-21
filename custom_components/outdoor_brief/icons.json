@@ -1,0 +1,11 @@
+{
+  "entity": {
+    "sensor": {
+      "daily_summary": { "default": "mdi:clipboard-text-clock" },
+      "tidal_range": { "default": "mdi:arrow-expand-vertical" },
+      "tide_twelfth": { "default": "mdi:chart-bell-curve" },
+      "next_spring_tide": { "default": "mdi:calendar-arrow-right" },
+      "admin_phone": { "default": "mdi:cellphone-message" }
+    }
+  }
+}
