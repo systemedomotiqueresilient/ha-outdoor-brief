@@ -4,6 +4,9 @@
   "after_dependencies": [
     "marees_france"
   ],
+  "categories": [
+    "weather_alerts.forecasts"
+  ],
   "codeowners": [
     "@systemedomotiqueresilient"
   ],

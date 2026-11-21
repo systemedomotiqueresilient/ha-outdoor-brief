@@ -15,5 +15,4 @@ Validée par Mathieu le 2026-11-21 (cahier des charges « Outdoor Brief — Cahi
 
 ## Pistes
 - **Port secondaire** (décalage horaire et facteur de hauteur) : seulement sur demande, Marées France couvrant déjà les petits ports.
-- **Icône de marque** (`brand/icon.png`) avant la publication.
 - **SIBLING_PLATFORMS** : faire ajouter `outdoor_brief` au module commun dans `ha-sdr` (version 1.2.0), pour que les intégrations sœurs lisent aussi ce téléphone admin.

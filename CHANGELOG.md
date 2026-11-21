@@ -13,6 +13,9 @@ Première version : profil littoral, à partir de l'intégration Marées France.
 - **Seuil des grandes marées réglable** (100 par défaut, de 70 à 120) dans le config flow et les options.
 - **Téléphone admin** : `admin_phone.py` MODULE_VERSION 1.1.0 copié tel quel depuis `ha-sdr` (SHA-256 `32b3619e…e1f9`, vérifié par un test). Capteur diagnostic `<entry_id>_admin_notify_target`, valeur dans `entry.data`. Aucune notification envoyée avant la 0.3.
 
+### Publication
+- Icônes de marque (`brand/icon.png`, `brand/icon@2x.png`) et catégorie Marketplace `weather_alerts.forecasts`, exigées par les contrôles HACS et Marketplace.
+
 ### Formats Marées France gérés
 - Nombres transmis en texte, `---` pour une valeur absente, `tide.none` / `--:--` les jours à trois marées, jours à un seul coefficient.
 - Heures `HH:MM` locales sans fuseau : reconstruites avec le fuseau de Home Assistant.
