@@ -4,7 +4,7 @@ from datetime import timedelta
 from typing import Final
 
 DOMAIN: Final = "outdoor_brief"
-VERSION: Final = "0.2.1"  # identique à manifest.json et au fichier VERSION
+VERSION: Final = "0.2.2"  # identique à manifest.json et au fichier VERSION
 
 # Carte Lovelace (servie par l'intégration elle-même)
 FRONTEND_URL: Final = "/outdoor_brief_static"

@@ -3,6 +3,7 @@
 Validée par Mathieu le 2026-11-21 (cahier des charges « Outdoor Brief — Cahier des charges »).
 
 ## Fait
+- **0.2.2** : l'éditeur de la carte ne propose plus que les résumés du jour ; message d'erreur lisible.
 - **0.2.1** : hauteur de la carte libre dans les sections, message clair si le capteur choisi n'est pas un résumé du jour.
 - **0.2.0** : carte Lovelace `outdoor-brief-card` (ligne d'état, tableau matin / après-midi, prochaine grande marée et plus fort coefficient du mois, éditeur visuel).
 - **0.1.0** : profil littoral, lecture de Marées France, marnage, douzièmes, prochaine grande marée, capteur résumé du jour, téléphone admin.

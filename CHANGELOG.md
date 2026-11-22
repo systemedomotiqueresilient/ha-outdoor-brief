@@ -2,6 +2,12 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [0.2.2] - 2026-11-22
+
+### Corrigé
+- **L'éditeur de la carte ne propose plus que les capteurs « Résumé du jour »**. Il proposait aussi « Prochaine grande marée », de même classe (date), avec lequel la carte ne peut rien afficher.
+- **Message lisible** quand le capteur choisi n'est pas un résumé : il cite le nom du capteur au lieu de son identifiant, et passe à la ligne au lieu de déborder de la carte.
+
 ## [0.2.1] - 2026-11-22
 
 Tirée du premier essai de la carte sur l'instance de Mathieu.

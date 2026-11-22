@@ -2,7 +2,7 @@
 // JavaScript sans dépendance. Aucune valeur venant d'une entité n'est insérée en HTML :
 // le gabarit est fixe et les données passent par textContent.
 
-const CARD_VERSION = "0.2.1";
+const CARD_VERSION = "0.2.2";
 
 const TEXT = {
   fr: {
@@ -24,7 +24,7 @@ const TEXT = {
     monthMax: "Plus fort coefficient du mois",
     monthMaxOn: (c, d) => `${c} le ${d}`,
     unavailable: "Résumé indisponible : vérifiez l'intégration Marées France.",
-    notSummary: (e) => `${e} n'est pas un capteur « Résumé du jour » d'Outdoor Brief. Choisissez celui dont le nom se termine par « Résumé du jour ».`,
+    notSummary: (e) => `« ${e} » n'est pas un capteur « Résumé du jour » d'Outdoor Brief : choisissez le bon capteur dans l'éditeur de la carte.`,
     notFound: (e) => `Entité introuvable : ${e}`,
     noEntity: "Choisissez le capteur « Résumé du jour » d'Outdoor Brief.",
     source: "Données SHOM via Marées France",
@@ -52,7 +52,7 @@ const TEXT = {
     monthMax: "Highest coefficient this month",
     monthMaxOn: (c, d) => `${c} on ${d}`,
     unavailable: "Summary unavailable: check the Marées France integration.",
-    notSummary: (e) => `${e} is not an Outdoor Brief “Daily summary” sensor. Choose the one whose name ends with “Daily summary”.`,
+    notSummary: (e) => `“${e}” is not an Outdoor Brief “Daily summary” sensor: pick the right sensor in the card editor.`,
     notFound: (e) => `Entity not found: ${e}`,
     noEntity: "Choose the Outdoor Brief “Daily summary” sensor.",
     source: "SHOM data via Marées France",
@@ -62,6 +62,13 @@ const TEXT = {
     pickerDesc: "The daily brief: tides, coefficients and next spring tide.",
   },
 };
+
+// Capteurs « Résumé du jour » : seuls à porter schema_version et le tableau des marées.
+const summaryEntities = (hass) =>
+  Object.keys(hass?.states || {}).filter((id) => {
+    const a = hass.states[id].attributes || {};
+    return id.startsWith("sensor.") && a.schema_version !== undefined && Array.isArray(a.tides);
+  });
 
 const lang = (hass) => (String(hass?.locale?.language || hass?.language || "en").startsWith("fr") ? "fr" : "en");
 const t = (hass) => TEXT[lang(hass)];
@@ -83,7 +90,7 @@ const STYLE = `
   .foot { margin-top: 12px; display: grid; gap: 4px; font-size: .95em; }
   .foot .k { color: var(--secondary-text-color); }
   .source { margin-top: 10px; font-size: .75em; color: var(--secondary-text-color); }
-  .warn { color: var(--warning-color, #c77700); }
+  .warn { color: var(--warning-color, #c77700); overflow-wrap: anywhere; }
   [hidden] { display: none !important; }
 `;
 
@@ -116,11 +123,7 @@ class OutdoorBriefCard extends HTMLElement {
   }
 
   static getStubConfig(hass) {
-    const entity = Object.keys(hass?.states || {}).find((id) => {
-      const a = hass.states[id].attributes || {};
-      return id.startsWith("sensor.") && a.schema_version !== undefined && Array.isArray(a.tides);
-    });
-    return { entity: entity || "" };
+    return { entity: summaryEntities(hass)[0] || "" };
   }
 
   setConfig(config) {
@@ -196,7 +199,7 @@ class OutdoorBriefCard extends HTMLElement {
     if (!state) return this._warn(tx.notFound(entityId));
     const a = state.attributes || {};
     if (state.state === "unavailable" || state.state === "unknown") return this._warn(tx.unavailable);
-    if (a.schema_version === undefined || !Array.isArray(a.tides)) return this._warn(tx.notSummary(entityId));
+    if (a.schema_version === undefined || !Array.isArray(a.tides)) return this._warn(tx.notSummary(a.friendly_name || entityId));
     this._warn("");
 
     this._$(".port").textContent = a.port || "";
@@ -274,7 +277,11 @@ class OutdoorBriefCardEditor extends HTMLElement {
     this._form.hass = this._hass;
     this._form.data = this._config;
     this._form.schema = [
-      { name: "entity", required: true, selector: { entity: { filter: { integration: "outdoor_brief", domain: "sensor", device_class: "date" } } } },
+      {
+        name: "entity",
+        required: true,
+        selector: { entity: { include_entities: summaryEntities(this._hass), filter: { integration: "outdoor_brief", domain: "sensor" } } },
+      },
       { name: "compact", selector: { boolean: {} } },
     ];
     this._form.computeLabel = (s) => (s.name === "entity" ? tx.editorEntity : tx.editorCompact);

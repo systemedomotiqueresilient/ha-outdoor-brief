@@ -269,6 +269,8 @@ def test_card_never_injects_data_as_html() -> None:
     # innerHTML ne reçoit que le gabarit fixe ; les données passent par textContent
     assert re.findall(r"innerHTML\s*=\s*([A-Z_]+)", text) == ["TEMPLATE"]
     assert 'customElements.define("outdoor-brief-card"' in text
+    # L'éditeur ne propose que les résumés du jour (0.2.2)
+    assert "include_entities: summaryEntities(this._hass)" in text
 
 
 def test_translations_match() -> None:
