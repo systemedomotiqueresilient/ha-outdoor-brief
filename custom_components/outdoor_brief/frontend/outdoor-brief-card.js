@@ -2,7 +2,7 @@
 // JavaScript sans dépendance. Aucune valeur venant d'une entité n'est insérée en HTML :
 // le gabarit est fixe et les données passent par textContent.
 
-const CARD_VERSION = "0.2.0";
+const CARD_VERSION = "0.2.1";
 
 const TEXT = {
   fr: {
@@ -24,6 +24,7 @@ const TEXT = {
     monthMax: "Plus fort coefficient du mois",
     monthMaxOn: (c, d) => `${c} le ${d}`,
     unavailable: "Résumé indisponible : vérifiez l'intégration Marées France.",
+    notSummary: (e) => `${e} n'est pas un capteur « Résumé du jour » d'Outdoor Brief. Choisissez celui dont le nom se termine par « Résumé du jour ».`,
     notFound: (e) => `Entité introuvable : ${e}`,
     noEntity: "Choisissez le capteur « Résumé du jour » d'Outdoor Brief.",
     source: "Données SHOM via Marées France",
@@ -51,6 +52,7 @@ const TEXT = {
     monthMax: "Highest coefficient this month",
     monthMaxOn: (c, d) => `${c} on ${d}`,
     unavailable: "Summary unavailable: check the Marées France integration.",
+    notSummary: (e) => `${e} is not an Outdoor Brief “Daily summary” sensor. Choose the one whose name ends with “Daily summary”.`,
     notFound: (e) => `Entity not found: ${e}`,
     noEntity: "Choose the Outdoor Brief “Daily summary” sensor.",
     source: "SHOM data via Marées France",
@@ -74,6 +76,7 @@ const STYLE = `
   table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
   th, td { padding: 6px 4px; text-align: left; border-bottom: 1px solid var(--divider-color); }
   th { color: var(--secondary-text-color); font-weight: 500; font-size: .85em; }
+  td { white-space: nowrap; }
   td.label { color: var(--secondary-text-color); }
   td.strong { font-weight: 600; }
   tr:last-child td { border-bottom: none; }
@@ -136,7 +139,8 @@ class OutdoorBriefCard extends HTMLElement {
   }
 
   getGridOptions() {
-    return { columns: 12, min_columns: 6, rows: this._config?.compact ? 4 : 5 };
+    // Pas de « rows » : la hauteur suit le contenu, sinon le bas est coupé dans les sections.
+    return { columns: 12, min_columns: 6 };
   }
 
   _build() {
@@ -191,7 +195,8 @@ class OutdoorBriefCard extends HTMLElement {
     const state = this._hass.states[entityId];
     if (!state) return this._warn(tx.notFound(entityId));
     const a = state.attributes || {};
-    if (state.state === "unavailable" || !Array.isArray(a.tides)) return this._warn(tx.unavailable);
+    if (state.state === "unavailable" || state.state === "unknown") return this._warn(tx.unavailable);
+    if (a.schema_version === undefined || !Array.isArray(a.tides)) return this._warn(tx.notSummary(entityId));
     this._warn("");
 
     this._$(".port").textContent = a.port || "";

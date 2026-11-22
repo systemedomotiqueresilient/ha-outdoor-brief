@@ -2,6 +2,15 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [0.2.1] - 2026-11-22
+
+Tirée du premier essai de la carte sur l'instance de Mathieu.
+
+### Corrigé
+- **Bas de la carte coupé dans la vue en sections** (visible en mode édition) : la carte n'impose plus de hauteur à la grille, elle prend celle de son contenu.
+- **Heure et hauteur coupées sur deux lignes** quand la carte est étroite : les cases du tableau ne passent plus à la ligne.
+- **Message trompeur avec un mauvais capteur** : choisir « Prochaine grande marée » au lieu de « Résumé du jour » affichait « Résumé indisponible : vérifiez l'intégration Marées France ». La carte dit maintenant que ce capteur n'est pas un résumé du jour, et réserve le premier message à un résumé réellement indisponible.
+
 ## [0.2.0] - 2026-11-22
 
 ### Ajouté
