@@ -56,6 +56,7 @@ class Context:
     now: datetime
     today: date
     threshold: int
+    port: str
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -110,10 +111,12 @@ def _summary_attrs(ctx: Context) -> dict[str, Any]:
     best = month_max(ctx.data.coefficients, ctx.today)
     return {
         "schema_version": SCHEMA_VERSION,
+        "port": ctx.port,
         "date": ctx.today.isoformat(),
         "tides": [tide.as_dict() for tide in tides_of_day(ctx.data.tides, ctx.today)],
         "coefficients": ctx.data.coefficients.get(ctx.today, []),
         "tidal_range": tidal_range(previous, next_tide),
+        "tide_twelfth": twelfth(previous, next_tide, ctx.now),
         "next_tide": next_tide.as_dict() if next_tide else None,
         "next_spring_tide": (
             {"date": upcoming[0][0].isoformat(), "coefficient": upcoming[0][1]}
@@ -207,6 +210,7 @@ class BriefSensor(CoordinatorEntity[OutdoorBriefCoordinator], SensorEntity):
             threshold=int(
                 self._entry.options.get(CONF_SPRING_THRESHOLD, DEFAULT_SPRING_THRESHOLD)
             ),
+            port=self._entry.title,
         )
 
     @property

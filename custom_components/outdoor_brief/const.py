@@ -4,7 +4,11 @@ from datetime import timedelta
 from typing import Final
 
 DOMAIN: Final = "outdoor_brief"
-VERSION: Final = "0.1.0"  # identique à manifest.json et au fichier VERSION
+VERSION: Final = "0.2.0"  # identique à manifest.json et au fichier VERSION
+
+# Carte Lovelace (servie par l'intégration elle-même)
+FRONTEND_URL: Final = "/outdoor_brief_static"
+CARD_FILE: Final = "outdoor-brief-card.js"
 
 # Contrat public : à monter à chaque changement incompatible des attributs exposés
 SCHEMA_VERSION: Final = 1

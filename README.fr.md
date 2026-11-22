@@ -2,9 +2,9 @@
 
 [English](README.md) · **Français**
 
-Le **résumé du jour pour ce qui se passe dehors**, dans Home Assistant. La version 0.1 couvre le littoral : les marées du jour, le marnage, le douzième de marée en cours et la prochaine grande marée, rassemblés dans un capteur de résumé qu'une carte Lovelace et une notification sur téléphone afficheront dans les versions suivantes.
+Le **résumé du jour pour ce qui se passe dehors**, dans Home Assistant. La version 0.2 couvre le littoral : les marées du jour, le marnage, le douzième de marée en cours et la prochaine grande marée, rassemblés dans un capteur de résumé et affichés par une carte Lovelace. La notification sur téléphone arrive ensuite.
 
-> **Statut : 0.1.0, début de développement.** La carte (0.2), les notifications visuelles (0.3), la météo marine (0.4) et le profil potager (0.5) sont dans la [feuille de route](ROADMAP.md).
+> **Statut : 0.2.0, début de développement.** Les notifications visuelles (0.3), la météo marine (0.4) et le profil potager (0.5) sont dans la [feuille de route](ROADMAP.md).
 
 ## D'où viennent les données
 
@@ -20,13 +20,25 @@ Outdoor Brief **ne récupère pas les marées sur Internet**. Il les lit dans l'
 
 | Entité | État | Attributs principaux |
 |---|---|---|
-| Résumé du jour | date du jour | `schema_version`, `tides` (4 marées : type, heure, hauteur, coefficient), `coefficients`, `tidal_range`, `next_tide`, `next_spring_tide`, `month_max` |
+| Résumé du jour | date du jour | `schema_version`, `port`, `tides` (4 marées : type, heure, hauteur, coefficient), `coefficients`, `tidal_range`, `tide_twelfth`, `next_tide`, `next_spring_tide`, `month_max` |
 | Marnage | mètres, demi-marée en cours | |
 | Douzième de marée | 1 à 6 | `trend`, `range_share`, `started_at`, `ends_at`, `duration_minutes` |
 | Prochaine grande marée | date | `coefficient`, `threshold`, `upcoming` |
 | Téléphone admin | cible de notification | `notify_service` (convention commune SDR) |
 
 Le marnage et le douzième sont recalculés toutes les 5 minutes ; Marées France est relue toutes les heures. Le **seuil des grandes marées** (100 par défaut) se règle dans les options : décembre 2026, par exemple, culmine à 99.
+
+## Carte Lovelace
+
+La carte `outdoor-brief-card` est livrée avec l'intégration et se charge toute seule. Ajoutez-la depuis *Ajouter une carte* (recherchez « Outdoor Brief »), ou en YAML :
+
+```yaml
+type: custom:outdoor-brief-card
+entity: sensor.outdoor_brief_mon_port_resume_du_jour  # votre capteur « Résumé du jour »
+compact: false
+```
+
+Elle affiche le sens de la marée et le douzième en cours, un tableau matin / après-midi des pleines et basses mers avec leurs coefficients, la prochaine grande marée et le plus fort coefficient du mois. `compact: true` ne garde que le tableau et la prochaine grande marée. Après une mise à jour, rechargez la page une fois si la carte affiche encore l'ancienne version.
 
 ## À propos du profil potager
 

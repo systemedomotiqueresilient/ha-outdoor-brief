@@ -2,6 +2,21 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [0.2.0] - 2026-11-22
+
+### Ajouté
+- **Carte Lovelace `outdoor-brief-card`**, livrée avec l'intégration et chargée automatiquement : aucune ressource à déclarer, ni second dépôt.
+  - Ligne d'état : sens de la marée, douzième en cours, marnage, heure de la prochaine pleine ou basse mer.
+  - Tableau du jour en deux colonnes, matin et après-midi : pleines mers, basses mers, coefficients. Une case vide affiche « — » les jours à trois marées.
+  - Pied : prochaine grande marée (date, coefficient, nombre de jours) et plus fort coefficient du mois.
+  - Éditeur visuel : choix du capteur « Résumé du jour » et mode compact. La carte apparaît dans la liste « Ajouter une carte ».
+  - Textes en français ou en anglais selon la langue de Home Assistant ; heures dans le fuseau de l'installation.
+  - JavaScript sans dépendance ; aucune donnée d'entité n'est insérée en HTML.
+- **Résumé du jour** : attributs `port` et `tide_twelfth`. Ajouts seulement, `schema_version` reste à 1.
+
+### Modifié
+- Le manifest dépend de `http` et se charge après `frontend`, pour servir la carte.
+
 ## [0.1.0] - 2026-11-21
 
 Première version : profil littoral, à partir de l'intégration Marées France.

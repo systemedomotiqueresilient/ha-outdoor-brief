@@ -2,9 +2,9 @@
 
 **English** · [Français](README.fr.md)
 
-The **daily brief for what happens outdoors**, in Home Assistant. Version 0.1 covers the coast: today's tides, tidal range, the current tide twelfth and the next spring tide, gathered in a single summary sensor that a Lovelace card and a phone notification will display in the next versions.
+The **daily brief for what happens outdoors**, in Home Assistant. Version 0.2 covers the coast: today's tides, tidal range, the current tide twelfth and the next spring tide, gathered in a single summary sensor and shown by a Lovelace card. A phone notification comes next.
 
-> **Status: 0.1.0, early development.** The card (0.2), visual notifications (0.3), marine weather (0.4) and the garden profile (0.5) are on the [roadmap](ROADMAP.md).
+> **Status: 0.2.0, early development.** Visual notifications (0.3), marine weather (0.4) and the garden profile (0.5) are on the [roadmap](ROADMAP.md).
 
 ## Where the data comes from
 
@@ -20,13 +20,25 @@ Outdoor Brief **does not fetch tides from the Internet**. It reads them from the
 
 | Entity | State | Main attributes |
 |---|---|---|
-| Daily summary | today's date | `schema_version`, `tides` (4 tides: type, time, height, coefficient), `coefficients`, `tidal_range`, `next_tide`, `next_spring_tide`, `month_max` |
+| Daily summary | today's date | `schema_version`, `port`, `tides` (4 tides: type, time, height, coefficient), `coefficients`, `tidal_range`, `tide_twelfth`, `next_tide`, `next_spring_tide`, `month_max` |
 | Tidal range | metres, current half-tide | |
 | Tide twelfth | 1 to 6 | `trend`, `range_share`, `started_at`, `ends_at`, `duration_minutes` |
 | Next spring tide | date | `coefficient`, `threshold`, `upcoming` |
 | Admin phone | notify target | `notify_service` (common SDR convention) |
 
 The tidal range and the twelfth are recomputed every 5 minutes; Marées France is read again every hour. The **spring tide threshold** (100 by default) can be changed in the options: December 2026, for instance, peaks at 99.
+
+## Lovelace card
+
+The `outdoor-brief-card` card ships with the integration and loads automatically. Add it from *Add card* (search "Outdoor Brief"), or in YAML:
+
+```yaml
+type: custom:outdoor-brief-card
+entity: sensor.outdoor_brief_my_port_daily_summary  # your "Daily summary" sensor
+compact: false
+```
+
+It shows the tide trend and twelfth, a morning/afternoon table of high and low tides with coefficients, the next spring tide and the month's highest coefficient. `compact: true` keeps only the table and the next spring tide. After an update, reload the page once if the card still shows the previous version.
 
 ## About the garden profile
 

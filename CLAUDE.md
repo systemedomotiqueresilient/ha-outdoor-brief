@@ -9,6 +9,7 @@ Intégration Home Assistant (domaine `outdoor_brief`). Le résumé du jour pour 
 - **On passe par l'appareil et le registre**, jamais par un `entity_id` de Marées France (renommable).
 - **Les entités ne sont créées que pour le profil et les données choisis.** Une source absente rend indisponibles seulement les entités qui en dépendent.
 - **Contrat public** : `unique_id` et attributs du résumé (`schema_version`). Un attribut n'est renommé ou supprimé qu'en version majeure, après une version où il est signalé obsolète.
+- **Carte** : JavaScript sans dépendance ni étape de build ; l'innerHTML ne reçoit que le gabarit fixe, les données passent par textContent (un test le vérifie).
 - **Aucune nouvelle dépendance Python.** Le calcul lunaire sera écrit en Python pur ; l'image utilisera Pillow, déjà présent dans HA (à confirmer en 0.3).
 - **Aucune donnée personnelle dans le dépôt public** (ni coordonnées GPS réelles, ni identifiants d'appareil). Commits avec l'adresse GitHub noreply.
 - **Mathieu pousse lui-même les commits** (à partir d'un patch ou d'un bundle).
@@ -26,11 +27,12 @@ Intégration Home Assistant (domaine `outdoor_brief`). Le résumé du jour pour 
 - **Synchronisation entre agents** : carnet Evernote « HA Intégrations – Synchro IA » (00 : protocole, 01 : spécification, 02 : journal, à compléter à la fin ; 15 : fiche Outdoor Brief).
 
 ## Versions
-La version doit être identique dans `manifest.json`, `const.py` (`VERSION`) et `VERSION`. Un test le vérifie. Tenir à jour `CHANGELOG.md` et `ROADMAP.md`.
+La version doit être identique dans `manifest.json`, `const.py` (`VERSION`), `VERSION` et `CARD_VERSION` en tête de `frontend/outdoor-brief-card.js`. Un test le vérifie. Tenir à jour `CHANGELOG.md` et `ROADMAP.md`.
 
 ## Vérifications
 ```bash
 python3 -m pytest -q --cov=custom_components/outdoor_brief   # couverture ≥ 50 %
 ruff check custom_components/
+node --check custom_components/outdoor_brief/frontend/outdoor-brief-card.js
 cd ../ha-core && python3 -m script.hassfest --action validate --integration-path ../ha-outdoor-brief/custom_components/outdoor_brief
 ```

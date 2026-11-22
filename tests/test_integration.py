@@ -5,8 +5,12 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import re
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+
+import custom_components.outdoor_brief as ob
 from pytest_homeassistant_custom_component.common import MockConfigEntry, async_fire_time_changed
 
 from homeassistant import config_entries
@@ -24,10 +28,12 @@ from custom_components.outdoor_brief.admin_phone import (
     CONF_ADMIN_NOTIFY_TARGET,
 )
 from custom_components.outdoor_brief.const import (
+    CARD_FILE,
     CONF_PORT_DEVICE,
     CONF_PROFILE,
     CONF_SPRING_THRESHOLD,
     DOMAIN,
+    FRONTEND_URL,
     SCHEMA_VERSION,
     VERSION,
 )
@@ -130,6 +136,8 @@ async def test_sensors(hass: HomeAssistant, entry) -> None:
     assert summary.state == "2026-11-21"
     attrs = summary.attributes
     assert attrs["schema_version"] == SCHEMA_VERSION
+    assert attrs["port"] == "Port-Louis (Locmalo)"
+    assert attrs["tide_twelfth"] == 6
     assert attrs["coefficients"] == [57, 64]
     assert [(t["type"], t["time"][11:16], t["height"]) for t in attrs["tides"]] == [
         ("high", "01:42", 4.37),
@@ -231,6 +239,36 @@ def test_module_copy_and_versions() -> None:
     )
     manifest = json.loads((root / "custom_components" / DOMAIN / "manifest.json").read_text())
     assert manifest["version"] == VERSION == (root / "VERSION").read_text().strip()
+    js = (root / "custom_components" / DOMAIN / "frontend" / CARD_FILE).read_text()
+    assert f'const CARD_VERSION = "{VERSION}";' in js
+
+
+# --- Carte Lovelace ------------------------------------------------------------------
+
+
+async def test_card_registered(hass: HomeAssistant) -> None:
+    hass.config.components.add("frontend")
+    hass.http = MagicMock(async_register_static_paths=AsyncMock())
+    with patch.object(ob, "add_extra_js_url") as extra:
+        assert await ob.async_setup(hass, {})
+    config = hass.http.async_register_static_paths.call_args.args[0][0]
+    assert config.url_path == FRONTEND_URL
+    assert (Path(config.path) / CARD_FILE).is_file()
+    extra.assert_called_once_with(hass, f"{FRONTEND_URL}/{CARD_FILE}?v={VERSION}")
+
+
+async def test_card_skipped_without_frontend(hass: HomeAssistant) -> None:
+    with patch.object(ob, "add_extra_js_url") as extra:
+        assert await ob.async_setup(hass, {})
+    extra.assert_not_called()
+
+
+def test_card_never_injects_data_as_html() -> None:
+    js = (Path(__file__).parents[1] / "custom_components" / DOMAIN / "frontend" / CARD_FILE)
+    text = js.read_text(encoding="utf-8")
+    # innerHTML ne reçoit que le gabarit fixe ; les données passent par textContent
+    assert re.findall(r"innerHTML\s*=\s*([A-Z_]+)", text) == ["TEMPLATE"]
+    assert 'customElements.define("outdoor-brief-card"' in text
 
 
 def test_translations_match() -> None:
