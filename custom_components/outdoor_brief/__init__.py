@@ -63,6 +63,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         results = {}
         for entry in entries:
             notifier: Notifier = entry.runtime_data.notifier
+            # Sans port précisé, un port regroupé secondaire est déjà inclus dans la
+            # notification du port principal : on ne l'envoie pas une seconde fois.
+            if wanted is None and notifier.is_secondary():
+                continue
             outcome = await notifier.async_run(dt_util.now(), force=True)
             results[entry.title] = outcome["summary"]
         return {"sent": results}

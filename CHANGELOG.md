@@ -2,6 +2,11 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [0.3.2] - 2026-11-23
+
+### Corrigé
+- **Action `outdoor_brief.send_summary` sans port précisé, avec des ports regroupés** : elle envoyait la notification regroupée et, en plus, celle de chaque port secondaire. Les ports secondaires sont maintenant ignorés, puisqu'ils figurent déjà dans la notification regroupée. Précisé, un port secondaire envoie toujours son propre résumé, pour tester. Le passage quotidien n'était pas concerné.
+
 ## [0.3.1] - 2026-11-23
 
 Tirée du premier essai des notifications sur l'iPhone de Mathieu.

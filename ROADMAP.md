@@ -3,6 +3,7 @@
 Validée par Mathieu le 2026-11-21 (cahier des charges « Outdoor Brief — Cahier des charges »).
 
 ## Fait
+- **0.3.2** : l'action de test n'envoie plus en double les ports regroupés.
 - **0.3.1** : image envoyée aussi quand le téléphone admin est une entité notify ; notification regroupée pour plusieurs ports ; ouverture d'un tableau de bord au toucher.
 - **0.3.0** : image du résumé, notifications (résumé quotidien, grande marée J-2), montre (complète ou avis), événements, action de test.
 - **0.2.2** : l'éditeur de la carte ne propose plus que les résumés du jour ; message d'erreur lisible.

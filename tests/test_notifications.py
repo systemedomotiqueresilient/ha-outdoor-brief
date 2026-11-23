@@ -288,3 +288,23 @@ def test_invalid_tap_url() -> None:
     assert errors == {"tap_url": "invalid_tap_url"}
     values, errors = _check_notifications({"watch_mode": "off", "tap_url": " /lovelace/0 "})
     assert not errors and values["tap_url"] == "/lovelace/0"
+
+
+async def test_send_summary_action_with_group(hass, marees, freezer, sent) -> None:
+    """Sans port précisé : une seule notification pour le groupe (0.3.2)."""
+    await _setup(hass, marees, freezer, "2026-11-23T10:00:00+00:00",
+                 notify_frequency="daily", notify_grouping="grouped")
+    second = await _add_port(hass, marees, "Port-Tudy", notify_frequency="daily",
+                             notify_grouping="grouped")
+    await _add_port(hass, marees, "Lorient", notify_frequency="daily")
+    response = await hass.services.async_call(
+        DOMAIN, "send_summary", {}, blocking=True, return_response=True
+    )
+    assert response == {"sent": {"Port-Louis (Locmalo)": True, "Lorient": True}}
+    assert [c["title"] for c in sent["phone"]] == ["🌊 Today's tides", "🌊 Lorient"]
+
+    # Port secondaire précisé : son propre résumé, pour tester
+    await hass.services.async_call(
+        DOMAIN, "send_summary", {"config_entry_id": second.entry_id}, blocking=True
+    )
+    assert sent["phone"][-1]["title"] == "🌊 Port-Tudy"

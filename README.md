@@ -4,7 +4,7 @@
 
 The **daily brief for what happens outdoors**, in Home Assistant. Version 0.2 covers the coast: today's tides, tidal range, the current tide twelfth and the next spring tide, gathered in a single summary sensor shown by a Lovelace card and sent each morning to your phone, with the summary image, and optionally to a smartwatch.
 
-> **Status: 0.3.1, early development.** Marine weather (0.4) and the garden profile (0.5) are on the [roadmap](ROADMAP.md).
+> **Status: 0.3.2, early development.** Marine weather (0.4) and the garden profile (0.5) are on the [roadmap](ROADMAP.md).
 
 ## Where the data comes from
 
