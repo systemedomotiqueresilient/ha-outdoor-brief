@@ -41,20 +41,25 @@
           "notify_time": "Heure d'envoi",
           "image_theme": "Thème de l'image",
           "watch_mode": "Montre",
-          "watch_notify_target": "Cible notify de la montre"
+          "watch_notify_target": "Cible notify de la montre",
+          "notify_grouping": "Plusieurs ports",
+          "tap_url": "Ouvrir au toucher (facultatif)"
         },
         "data_description": {
           "notify_frequency": "Chaque jour, seulement les jours remarquables (coefficient du jour au seuil des grandes marées, ou grande marée dans les 2 jours), ou jamais. L'alerte de grande marée (2 jours avant) part sauf avec « Jamais ».",
           "notify_time": "Heure du résumé du jour (fuseau de Home Assistant).",
           "image_theme": "Couleurs de l'image du résumé jointe à la notification du téléphone.",
           "watch_mode": "Désactivée ; notification complète (même texte, sans image, envoyée même sans téléphone) ; ou court avis, envoyé seulement si la notification du téléphone est bien partie.",
-          "watch_notify_target": "Un service ou une entité notify de la montre, par exemple notify.mobile_app_galaxy_watch."
+          "watch_notify_target": "Un service ou une entité notify de la montre, par exemple notify.mobile_app_galaxy_watch.",
+          "notify_grouping": "Notification propre à ce port, ou une seule notification qui regroupe tous les ports réglés sur « regroupée ». Elle suit les réglages (heure, fréquence, téléphone, montre) du plus ancien port regroupé ; les autres n'y ajoutent que leurs marées.",
+          "tap_url": "Chemin du tableau de bord ouvert en touchant la notification, par exemple /lovelace/0 ou /dashboard-meteo/0. Vide : l'app s'ouvre simplement."
         }
       }
     },
     "error": {
       "invalid_target": "Indiquez un service ou une entité notify, par exemple notify.mobile_app_mon_telephone.",
-      "watch_target_required": "Choisissez la cible notify de la montre, ou désactivez la montre."
+      "watch_target_required": "Choisissez la cible notify de la montre, ou désactivez la montre.",
+      "invalid_tap_url": "Indiquez un chemin qui commence par /, par exemple /lovelace/0."
     },
     "abort": {
       "already_configured": "Ce port est déjà configuré.",
@@ -90,20 +95,25 @@
           "notify_time": "Heure d'envoi",
           "image_theme": "Thème de l'image",
           "watch_mode": "Montre",
-          "watch_notify_target": "Cible notify de la montre"
+          "watch_notify_target": "Cible notify de la montre",
+          "notify_grouping": "Plusieurs ports",
+          "tap_url": "Ouvrir au toucher (facultatif)"
         },
         "data_description": {
           "notify_frequency": "Chaque jour, seulement les jours remarquables (coefficient du jour au seuil des grandes marées, ou grande marée dans les 2 jours), ou jamais. L'alerte de grande marée (2 jours avant) part sauf avec « Jamais ».",
           "notify_time": "Heure du résumé du jour (fuseau de Home Assistant).",
           "image_theme": "Couleurs de l'image du résumé jointe à la notification du téléphone.",
           "watch_mode": "Désactivée ; notification complète (même texte, sans image, envoyée même sans téléphone) ; ou court avis, envoyé seulement si la notification du téléphone est bien partie.",
-          "watch_notify_target": "Un service ou une entité notify de la montre, par exemple notify.mobile_app_galaxy_watch."
+          "watch_notify_target": "Un service ou une entité notify de la montre, par exemple notify.mobile_app_galaxy_watch.",
+          "notify_grouping": "Notification propre à ce port, ou une seule notification qui regroupe tous les ports réglés sur « regroupée ». Elle suit les réglages (heure, fréquence, téléphone, montre) du plus ancien port regroupé ; les autres n'y ajoutent que leurs marées.",
+          "tap_url": "Chemin du tableau de bord ouvert en touchant la notification, par exemple /lovelace/0 ou /dashboard-meteo/0. Vide : l'app s'ouvre simplement."
         }
       }
     },
     "error": {
       "invalid_target": "Indiquez un service ou une entité notify, par exemple notify.mobile_app_mon_telephone.",
-      "watch_target_required": "Choisissez la cible notify de la montre, ou désactivez la montre."
+      "watch_target_required": "Choisissez la cible notify de la montre, ou désactivez la montre.",
+      "invalid_tap_url": "Indiquez un chemin qui commence par /, par exemple /lovelace/0."
     }
   },
   "selector": {
@@ -130,6 +140,12 @@
         "off": "Désactivée",
         "full": "Notification complète",
         "notice": "Court avis (téléphone prévenu)"
+      }
+    },
+    "notify_grouping": {
+      "options": {
+        "own": "Notification propre à ce port",
+        "grouped": "Regroupée avec les autres ports"
       }
     }
   },

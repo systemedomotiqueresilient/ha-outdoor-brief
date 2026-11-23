@@ -2,6 +2,17 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [0.3.1] - 2026-11-23
+
+Tirée du premier essai des notifications sur l'iPhone de Mathieu.
+
+### Corrigé
+- **Image absente quand le téléphone admin est une entité notify** (`notify.iphone_…`). Le module commun passe alors par `notify.send_message`, qui ne transmet ni image, ni tag, ni lien. Pour une entité notify de l'app Companion, Outdoor Brief envoie maintenant au service `notify.mobile_app_…` du même appareil. Même chose pour la montre.
+
+### Ajouté
+- **Plusieurs ports : notification propre ou regroupée.** Les ports réglés sur « regroupée » partagent une seule notification : une ligne par port, et une image où leurs tableaux sont empilés. Elle suit les réglages (heure, fréquence, téléphone, montre) du plus ancien port regroupé ; les autres n'y ajoutent que leurs marées. L'alerte de grande marée est regroupée de la même façon. Les événements restent émis pour chaque port.
+- **Ouvrir au toucher** : chemin d'un tableau de bord (par exemple `/lovelace/0`), transmis en `url` (iOS) et `clickAction` (Android).
+
 ## [0.3.0] - 2026-11-23
 
 ### Ajouté

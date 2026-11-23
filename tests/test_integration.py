@@ -102,6 +102,8 @@ async def test_full_flow(hass: HomeAssistant, marees: FakeMarees, freezer) -> No
         CONF_SPRING_THRESHOLD: 95,
         **notif,
         "watch_notify_target": "notify.mobile_app_galaxy_watch",
+        "notify_grouping": "own",
+        "tap_url": None,
     }
     await hass.async_block_till_done()
     # Le port est toujours passé à l'action : sans lui, Marées France répond pour un autre port

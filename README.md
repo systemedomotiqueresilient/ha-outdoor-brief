@@ -4,7 +4,7 @@
 
 The **daily brief for what happens outdoors**, in Home Assistant. Version 0.2 covers the coast: today's tides, tidal range, the current tide twelfth and the next spring tide, gathered in a single summary sensor shown by a Lovelace card and sent each morning to your phone, with the summary image, and optionally to a smartwatch.
 
-> **Status: 0.3.0, early development.** Marine weather (0.4) and the garden profile (0.5) are on the [roadmap](ROADMAP.md).
+> **Status: 0.3.1, early development.** Marine weather (0.4) and the garden profile (0.5) are on the [roadmap](ROADMAP.md).
 
 ## Where the data comes from
 
@@ -49,6 +49,9 @@ Set in the *Notifications* screen (also in the options):
 - **Spring tide alert**, 2 days before, with the high tide times of that day.
 - **Smartwatch** (optional, independent of the phone): *full notification* (same text, no image, sent even without a phone) or *short notice* sent only when the phone notification went through. With an **Apple Watch**, iPhone notifications already appear on the watch: leave the watch off. With **Wear OS**, choose the watch's own notify service.
 - **Events** `outdoor_brief_daily_summary` and `outdoor_brief_spring_tide_upcoming` are fired even when notifications are off, for your own automations.
+- **Several ports**: one notification per port, or a single grouped notification (one line per port, stacked tables in the image), sent with the settings of the oldest grouped port.
+- **Open on tap**: a dashboard path, e.g. `/lovelace/0`.
+- **Admin phone set as a notify entity** (`notify.iphone_…`): Outdoor Brief sends to the device's `notify.mobile_app_…` service, the only one that carries the image.
 - **Test**: action `outdoor_brief.send_summary` sends the brief right away.
 
 An entry created before 0.3 sends nothing until you pick a frequency in its options.

@@ -3,6 +3,7 @@
 Validée par Mathieu le 2026-11-21 (cahier des charges « Outdoor Brief — Cahier des charges »).
 
 ## Fait
+- **0.3.1** : image envoyée aussi quand le téléphone admin est une entité notify ; notification regroupée pour plusieurs ports ; ouverture d'un tableau de bord au toucher.
 - **0.3.0** : image du résumé, notifications (résumé quotidien, grande marée J-2), montre (complète ou avis), événements, action de test.
 - **0.2.2** : l'éditeur de la carte ne propose plus que les résumés du jour ; message d'erreur lisible.
 - **0.2.1** : hauteur de la carte libre dans les sections, message clair si le capteur choisi n'est pas un résumé du jour.
@@ -17,4 +18,5 @@ Validée par Mathieu le 2026-11-21 (cahier des charges « Outdoor Brief — Cahi
 
 ## Pistes
 - **Port secondaire** (décalage horaire et facteur de hauteur) : seulement sur demande, Marées France couvrant déjà les petits ports.
+- **Module commun** : faire gérer par `async_notify_admin` (ha-sdr 1.2.0) la substitution entité notify → service mobile_app, pour que toutes les intégrations SDR puissent joindre une image.
 - **SIBLING_PLATFORMS** : faire ajouter `outdoor_brief` au module commun dans `ha-sdr` (version 1.2.0), pour que les intégrations sœurs lisent aussi ce téléphone admin.

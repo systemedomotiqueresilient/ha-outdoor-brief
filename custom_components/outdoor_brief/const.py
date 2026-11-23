@@ -4,7 +4,7 @@ from datetime import timedelta
 from typing import Final
 
 DOMAIN: Final = "outdoor_brief"
-VERSION: Final = "0.3.0"  # identique à manifest.json et au fichier VERSION
+VERSION: Final = "0.3.1"  # identique à manifest.json et au fichier VERSION
 
 # Carte Lovelace (servie par l'intégration elle-même)
 FRONTEND_URL: Final = "/outdoor_brief_static"
@@ -63,6 +63,16 @@ WATCH_NOTICE: Final = "notice"  # court avis, seulement si le téléphone a bien
 WATCH_MODES: Final = (WATCH_OFF, WATCH_FULL, WATCH_NOTICE)
 
 SPRING_TIDE_NOTICE_DAYS: Final = 2
+
+# Regroupement (0.3.1) : une notification pour tous les ports regroupés, envoyée selon
+# les réglages du premier port regroupé (le « port principal », le plus ancien).
+CONF_GROUPING: Final = "notify_grouping"
+GROUPING_OWN: Final = "own"
+GROUPING_GROUPED: Final = "grouped"
+GROUPINGS: Final = (GROUPING_OWN, GROUPING_GROUPED)
+
+# Ouverture au toucher (0.3.1) : chemin d'un tableau de bord, ex. /lovelace/0
+CONF_TAP_URL: Final = "tap_url"
 
 EVENT_DAILY_SUMMARY: Final = f"{DOMAIN}_daily_summary"
 EVENT_SPRING_TIDE: Final = f"{DOMAIN}_spring_tide_upcoming"

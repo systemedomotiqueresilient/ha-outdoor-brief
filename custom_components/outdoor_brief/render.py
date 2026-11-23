@@ -212,14 +212,23 @@ def footer_lines(summary: dict[str, Any], lang: dict[str, Any]) -> list[str]:
 
 
 def render_png(summary: dict[str, Any], language: str | None, theme: str = "light") -> bytes:
-    """Dessine le résumé ; la hauteur suit le contenu."""
+    """Dessine le résumé d'un port ; la hauteur suit le contenu."""
+    return render_summaries([summary], language, theme)
+
+
+def render_summaries(
+    summaries: list[dict[str, Any]], language: str | None, theme: str = "light"
+) -> bytes:
+    """Un ou plusieurs ports (notification regroupée) : tableaux empilés, pied commun."""
     lang = texts(language)
     colors = THEMES.get(theme, THEMES["light"])
     f_title, f_head = _font(56, medium=True), _font(36)
     f_label, f_value, f_small = _font(40), _font(40, medium=True), _font(30)
+    multi = len(summaries) > 1
+    first = summaries[0]
 
-    rows = 3
-    height = 300 + rows * 84 + 70 + 2 * 54 + 80
+    section = (56 if multi else 0) + 70 + 48 + 3 * 84 + (28 if multi else 0)
+    height = 168 + len(summaries) * section + 24 + 2 * 54 + 80
     image = Image.new("RGB", (WIDTH, height), colors["bg"])
     draw = ImageDraw.Draw(image)
 
@@ -229,22 +238,11 @@ def render_png(summary: dict[str, Any], language: str | None, theme: str = "ligh
 
     y = 34
     draw.text((MARGIN, y), "Outdoor Brief", font=f_title, fill=colors["text"])
-    port = summary.get("port") or ""
-    day = fmt_full_day(date.fromisoformat(summary["date"]), lang)
+    day = fmt_full_day(date.fromisoformat(first["date"]), lang)
+    port = "" if multi else first.get("port") or ""
     y += 70
     draw.text((MARGIN, y), f"{port} · {day}" if port else day, font=f_head, fill=colors["muted"])
-
     y += 64
-    if status := status_line(summary, lang):
-        draw.text((MARGIN, y), status, font=_font(36, medium=True), fill=colors["accent"])
-    y += 70
-
-    # Tableau
-    col_x = (MARGIN, MARGIN + 330, MARGIN + 660)
-    draw.text((col_x[1], y), lang["morning"], font=f_small, fill=colors["muted"])
-    draw.text((col_x[2], y), lang["afternoon"], font=f_small, fill=colors["muted"])
-    y += 48
-    table = halves(summary)
 
     def cell(tide: dict[str, Any] | None) -> str:
         if not tide:
@@ -254,20 +252,39 @@ def render_png(summary: dict[str, Any], language: str | None, theme: str = "ligh
     def coef(tide: dict[str, Any] | None) -> str:
         return str(tide["coefficient"]) if tide and tide.get("coefficient") else "—"
 
-    for label, values in (
-        (lang["high"], [cell(t) for t in table["high"]]),
-        (lang["low"], [cell(t) for t in table["low"]]),
-        (lang["coefficient"], [coef(t) for t in table["high"]]),
-    ):
-        draw.line([MARGIN, y, WIDTH - MARGIN, y], fill=colors["line"], width=2)
-        y += 18
-        draw.text((col_x[0], y), label, font=f_label, fill=colors["muted"])
-        for x, value in zip(col_x[1:], values, strict=True):
-            draw.text((x, y), value, font=f_value, fill=colors["text"])
-        y += 66
+    col_x = (MARGIN, MARGIN + 330, MARGIN + 660)
+    for summary in summaries:
+        if multi:
+            draw.text(
+                (MARGIN, y),
+                summary.get("port") or "",
+                font=_font(40, medium=True),
+                fill=colors["text"],
+            )
+            y += 56
+        if status := status_line(summary, lang):
+            draw.text((MARGIN, y), status, font=_font(36, medium=True), fill=colors["accent"])
+        y += 70
+        draw.text((col_x[1], y), lang["morning"], font=f_small, fill=colors["muted"])
+        draw.text((col_x[2], y), lang["afternoon"], font=f_small, fill=colors["muted"])
+        y += 48
+        table = halves(summary)
+        for label, values in (
+            (lang["high"], [cell(t) for t in table["high"]]),
+            (lang["low"], [cell(t) for t in table["low"]]),
+            (lang["coefficient"], [coef(t) for t in table["high"]]),
+        ):
+            draw.line([MARGIN, y, WIDTH - MARGIN, y], fill=colors["line"], width=2)
+            y += 18
+            draw.text((col_x[0], y), label, font=f_label, fill=colors["muted"])
+            for x, value in zip(col_x[1:], values, strict=True):
+                draw.text((x, y), value, font=f_value, fill=colors["text"])
+            y += 66
+        if multi:
+            y += 28
 
     y += 24
-    for line in footer_lines(summary, lang):
+    for line in footer_lines(first, lang):
         draw.text((MARGIN, y), line, font=f_small, fill=colors["text"])
         y += 54
     y += 10

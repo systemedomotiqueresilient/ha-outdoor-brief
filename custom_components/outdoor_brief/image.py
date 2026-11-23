@@ -9,16 +9,10 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
-from .const import (
-    CONF_IMAGE_THEME,
-    CONF_SPRING_THRESHOLD,
-    DEFAULT_IMAGE_THEME,
-    DEFAULT_SPRING_THRESHOLD,
-)
+from .const import CONF_IMAGE_THEME, DEFAULT_IMAGE_THEME
 from .coordinator import OutdoorBriefCoordinator
-from .render import render_png
+from .render import render_summaries
 from .sensor import device_info
-from .summary import build_summary
 
 
 async def async_setup_entry(
@@ -28,7 +22,11 @@ async def async_setup_entry(
 
 
 class SummaryImage(CoordinatorEntity[OutdoorBriefCoordinator], ImageEntity):
-    """PNG redessiné seulement quand le contenu du résumé change."""
+    """PNG redessiné seulement quand le contenu change.
+
+    Pour le port principal d'un groupe (0.3.1), l'image empile les résumés de tous les
+    ports regroupés : c'est elle qui part avec la notification commune.
+    """
 
     _attr_has_entity_name = True
     _attr_translation_key = "summary_image"
@@ -40,13 +38,15 @@ class SummaryImage(CoordinatorEntity[OutdoorBriefCoordinator], ImageEntity):
         self._entry = entry
         self._attr_unique_id = f"{entry.entry_id}_summary_image"
         self._attr_device_info = device_info(entry)
-        self._summary: dict | None = None
+        self._summary: list[dict] | None = None
         self._png: bytes | None = None
         self._refresh(write=False)
 
-    def summary(self) -> dict:
-        threshold = int(self._entry.options.get(CONF_SPRING_THRESHOLD, DEFAULT_SPRING_THRESHOLD))
-        return build_summary(self.coordinator.data, dt_util.now(), threshold, self._entry.title)
+    def summary(self) -> list[dict]:
+        notifier = getattr(self.coordinator, "notifier", None)
+        if notifier is None:  # pendant la mise en place de l'entrée
+            return []
+        return notifier.summaries(dt_util.now())
 
     def _refresh(self, write: bool = True) -> None:
         summary = self.summary()
@@ -62,9 +62,11 @@ class SummaryImage(CoordinatorEntity[OutdoorBriefCoordinator], ImageEntity):
         self._refresh()
 
     async def async_image(self) -> bytes | None:
-        if self._png is None and self._summary is not None:
+        if self._png is None and not self._summary:
+            self._refresh(write=False)
+        if self._png is None and self._summary:
             theme = self._entry.options.get(CONF_IMAGE_THEME, DEFAULT_IMAGE_THEME)
             self._png = await self.hass.async_add_executor_job(
-                render_png, self._summary, self.hass.config.language, theme
+                render_summaries, self._summary, self.hass.config.language, theme
             )
         return self._png

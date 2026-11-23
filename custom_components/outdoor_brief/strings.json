@@ -41,20 +41,25 @@
           "notify_time": "Send time",
           "image_theme": "Image theme",
           "watch_mode": "Watch",
-          "watch_notify_target": "Watch notify target"
+          "watch_notify_target": "Watch notify target",
+          "notify_grouping": "Several ports",
+          "tap_url": "Open on tap (optional)"
         },
         "data_description": {
           "notify_frequency": "Every day, only on remarkable days (today's coefficient reaches the spring tide threshold, or a spring tide within 2 days), or never. The spring tide alert (2 days before) is sent unless set to never.",
           "notify_time": "Time of the daily brief (Home Assistant time zone).",
           "image_theme": "Colours of the summary image attached to the phone notification.",
           "watch_mode": "Off; full notification (same text, no image, sent even without a phone); or short notice, sent only when the phone notification went through.",
-          "watch_notify_target": "A notify service or entity of the watch, e.g. notify.mobile_app_galaxy_watch."
+          "watch_notify_target": "A notify service or entity of the watch, e.g. notify.mobile_app_galaxy_watch.",
+          "notify_grouping": "Own notification for this port, or one notification grouping every port set to « grouped ». The grouped notification follows the settings (time, frequency, phone, watch) of the oldest grouped port; the others only add their tides.",
+          "tap_url": "Dashboard path opened when tapping the notification, e.g. /lovelace/0 or /dashboard-meteo/0. Empty: the app just opens."
         }
       }
     },
     "error": {
       "invalid_target": "Enter a notify service or entity, e.g. notify.mobile_app_my_phone.",
-      "watch_target_required": "Choose the watch's notify target, or set the watch to Off."
+      "watch_target_required": "Choose the watch's notify target, or set the watch to Off.",
+      "invalid_tap_url": "Enter a path starting with /, e.g. /lovelace/0."
     },
     "abort": {
       "already_configured": "This port is already configured.",
@@ -90,20 +95,25 @@
           "notify_time": "Send time",
           "image_theme": "Image theme",
           "watch_mode": "Watch",
-          "watch_notify_target": "Watch notify target"
+          "watch_notify_target": "Watch notify target",
+          "notify_grouping": "Several ports",
+          "tap_url": "Open on tap (optional)"
         },
         "data_description": {
           "notify_frequency": "Every day, only on remarkable days (today's coefficient reaches the spring tide threshold, or a spring tide within 2 days), or never. The spring tide alert (2 days before) is sent unless set to never.",
           "notify_time": "Time of the daily brief (Home Assistant time zone).",
           "image_theme": "Colours of the summary image attached to the phone notification.",
           "watch_mode": "Off; full notification (same text, no image, sent even without a phone); or short notice, sent only when the phone notification went through.",
-          "watch_notify_target": "A notify service or entity of the watch, e.g. notify.mobile_app_galaxy_watch."
+          "watch_notify_target": "A notify service or entity of the watch, e.g. notify.mobile_app_galaxy_watch.",
+          "notify_grouping": "Own notification for this port, or one notification grouping every port set to « grouped ». The grouped notification follows the settings (time, frequency, phone, watch) of the oldest grouped port; the others only add their tides.",
+          "tap_url": "Dashboard path opened when tapping the notification, e.g. /lovelace/0 or /dashboard-meteo/0. Empty: the app just opens."
         }
       }
     },
     "error": {
       "invalid_target": "Enter a notify service or entity, e.g. notify.mobile_app_my_phone.",
-      "watch_target_required": "Choose the watch's notify target, or set the watch to Off."
+      "watch_target_required": "Choose the watch's notify target, or set the watch to Off.",
+      "invalid_tap_url": "Enter a path starting with /, e.g. /lovelace/0."
     }
   },
   "selector": {
@@ -130,6 +140,12 @@
         "off": "Off",
         "full": "Full notification",
         "notice": "Short notice (phone notified)"
+      }
+    },
+    "notify_grouping": {
+      "options": {
+        "own": "Own notification for this port",
+        "grouped": "Grouped with the other ports"
       }
     }
   },

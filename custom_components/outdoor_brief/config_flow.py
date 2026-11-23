@@ -21,6 +21,7 @@ from homeassistant.helpers.selector import (
     SelectSelector,
     SelectSelectorConfig,
     SelectSelectorMode,
+    TextSelector,
     TimeSelector,
 )
 import voluptuous as vol
@@ -34,12 +35,14 @@ from .admin_phone import (
     suggest_admin_target,
 )
 from .const import (
+    CONF_GROUPING,
     CONF_IMAGE_THEME,
     CONF_NOTIFY_FREQUENCY,
     CONF_NOTIFY_TIME,
     CONF_PORT_DEVICE,
     CONF_PROFILE,
     CONF_SPRING_THRESHOLD,
+    CONF_TAP_URL,
     CONF_WATCH_MODE,
     CONF_WATCH_TARGET,
     DEFAULT_IMAGE_THEME,
@@ -49,6 +52,8 @@ from .const import (
     DOMAIN,
     FALLBACK_FREQUENCY,
     FREQUENCIES,
+    GROUPING_OWN,
+    GROUPINGS,
     MAREES_DOMAIN,
     MAX_SPRING_THRESHOLD,
     MIN_SPRING_THRESHOLD,
@@ -123,9 +128,15 @@ def _notifications_schema(
             vol.Required(
                 CONF_NOTIFY_TIME, default=options.get(CONF_NOTIFY_TIME, DEFAULT_NOTIFY_TIME)
             ): TimeSelector(),
+            vol.Required(CONF_GROUPING, default=options.get(CONF_GROUPING, GROUPING_OWN)): choice(
+                CONF_GROUPING, GROUPINGS
+            ),
             vol.Required(
                 CONF_IMAGE_THEME, default=options.get(CONF_IMAGE_THEME, DEFAULT_IMAGE_THEME)
             ): choice(CONF_IMAGE_THEME, THEMES),
+            vol.Optional(
+                CONF_TAP_URL, description={"suggested_value": options.get(CONF_TAP_URL)}
+            ): TextSelector(),
             vol.Required(CONF_WATCH_MODE, default=options.get(CONF_WATCH_MODE, WATCH_OFF)): choice(
                 CONF_WATCH_MODE, WATCH_MODES
             ),
@@ -150,6 +161,10 @@ def _check_notifications(user_input: dict[str, Any]) -> tuple[dict[str, Any], di
     elif values.get(CONF_WATCH_MODE, WATCH_OFF) != WATCH_OFF and watch is None:
         errors[CONF_WATCH_TARGET] = "watch_target_required"
     values[CONF_WATCH_TARGET] = watch
+    tap = str(values.get(CONF_TAP_URL) or "").strip()
+    if tap and not tap.startswith(("/", "http://", "https://", "homeassistant://")):
+        errors[CONF_TAP_URL] = "invalid_tap_url"
+    values[CONF_TAP_URL] = tap or None
     return values, errors
 
 

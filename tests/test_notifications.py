@@ -197,3 +197,94 @@ def test_message_helpers() -> None:
     assert is_remarkable(summary, datetime(2026, 11, 28).date())
     assert is_remarkable({**summary, "coefficients": [100]}, datetime(2026, 11, 21).date())
     assert not is_remarkable({"coefficients": [50]}, datetime(2026, 11, 21).date())
+
+
+# --- 0.3.1 : cible entité, lien au toucher, regroupement ---------------------------------
+
+
+async def test_entity_target_uses_device_service(hass, marees, freezer, sent) -> None:
+    """Téléphone admin = entité notify de l'app : l'envoi passe par son service mobile_app."""
+    from homeassistant.helpers import device_registry as dr
+
+    app = MockConfigEntry(domain="mobile_app", title="iPhone")
+    app.add_to_hass(hass)
+    device = dr.async_get(hass).async_get_or_create(
+        config_entry_id=app.entry_id, identifiers={("mobile_app", "iphone")}, name="iPhone"
+    )
+    er.async_get(hass).async_get_or_create(
+        "notify", "mobile_app", "iphone_notify", device_id=device.id,
+        suggested_object_id="iphone", config_entry=app,
+    )
+    hass.states.async_set("notify.iphone", "unknown")
+    send_message = []
+    hass.services.async_register("notify", "send_message", lambda call: send_message.append(1))
+
+    await _setup(hass, marees, freezer, "2026-11-21T05:00:00+00:00", notify_frequency="daily",
+                 tap_url="/lovelace/meteo", phone="notify.iphone")
+    await _tick(hass, freezer, PARIS_0700_21)
+    assert send_message == []  # pas de send_message : il perdrait l'image
+    data = sent["phone"][0]["data"]
+    assert data["image"].startswith("/api/image_proxy/image.")
+    assert data["url"] == data["clickAction"] == "/lovelace/meteo"
+
+
+async def _add_port(hass, marees, name: str, **options) -> MockConfigEntry:
+    from homeassistant.helpers import device_registry as dr
+
+    device = dr.async_get(hass).async_get_or_create(
+        config_entry_id=marees.entry.entry_id, identifiers={("marees_france", name)}, name=name
+    )
+    entry = MockConfigEntry(
+        domain=DOMAIN, version=1, minor_version=1, title=name, unique_id=device.id,
+        data={CONF_PROFILE: "coastal", CONF_PORT_DEVICE: device.id,
+              CONF_ADMIN_NOTIFY_TARGET: PHONE},
+        options={CONF_SPRING_THRESHOLD: 100, "notify_time": "07:00:00", **options},
+    )
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    return entry
+
+
+async def test_grouped_ports_send_one_notification(hass, marees, freezer, sent, hass_client):
+    first = await _setup(hass, marees, freezer, "2026-11-23T05:00:00+00:00",
+                         notify_frequency="daily", notify_grouping="grouped",
+                         **{CONF_SPRING_THRESHOLD: 95})
+    await _add_port(hass, marees, "Port-Tudy", notify_frequency="daily",
+                    notify_grouping="grouped", **{CONF_SPRING_THRESHOLD: 95})
+    await _add_port(hass, marees, "Lorient", notify_frequency="daily",
+                    **{CONF_SPRING_THRESHOLD: 95})  # propre à ce port
+    await _tick(hass, freezer, PARIS_0700_23)
+
+    titles = [c["title"] for c in sent["phone"]]
+    assert titles.count("🌊 Today's tides") == 1  # un seul résumé pour les deux regroupés
+    assert titles.count("🌊 Lorient") == 1  # le port « propre » garde le sien
+    assert titles.count("🌕 Spring tide in 2 days") == 2  # groupe + Lorient
+    grouped = next(c for c in sent["phone"] if c["title"] == "🌊 Today's tides")
+    assert grouped["message"].splitlines() == [
+        "Port-Louis (Locmalo) : HW 03:07 · 15:30 | LW 09:17 · 21:37 | coef 81-86",
+        "Port-Tudy : HW 03:07 · 15:30 | LW 09:17 · 21:37 | coef 81-86",
+    ]
+    spring = next(
+        c for c in sent["phone"]
+        if c["title"] == "🌕 Spring tide in 2 days" and "Port-Tudy" in c["message"]
+    )
+    assert len(spring["message"].splitlines()) == 2
+
+    # L'image du port principal empile les deux ports : plus haute que celle d'un seul port
+    image_id = er.async_get(hass).async_get_entity_id(
+        "image", DOMAIN, f"{first.entry_id}_summary_image"
+    )
+    client = await hass_client()
+    resp = await client.get(hass.states.get(image_id).attributes["entity_picture"])
+    png = Image.open(BytesIO(await resp.read()))
+    assert png.height > 1100
+
+
+def test_invalid_tap_url() -> None:
+    from custom_components.outdoor_brief.config_flow import _check_notifications
+
+    _, errors = _check_notifications({"watch_mode": "off", "tap_url": "lovelace"})
+    assert errors == {"tap_url": "invalid_tap_url"}
+    values, errors = _check_notifications({"watch_mode": "off", "tap_url": " /lovelace/0 "})
+    assert not errors and values["tap_url"] == "/lovelace/0"

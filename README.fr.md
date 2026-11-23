@@ -4,7 +4,7 @@
 
 Le **résumé du jour pour ce qui se passe dehors**, dans Home Assistant. La version 0.2 couvre le littoral : les marées du jour, le marnage, le douzième de marée en cours et la prochaine grande marée, rassemblés dans un capteur de résumé affichés par une carte Lovelace et envoyés chaque matin sur votre téléphone, avec l'image du résumé, et si vous le souhaitez sur une montre connectée.
 
-> **Statut : 0.3.0, début de développement.** La météo marine (0.4) et le profil potager (0.5) sont dans la [feuille de route](ROADMAP.md).
+> **Statut : 0.3.1, début de développement.** La météo marine (0.4) et le profil potager (0.5) sont dans la [feuille de route](ROADMAP.md).
 
 ## D'où viennent les données
 
@@ -49,6 +49,9 @@ Elle affiche le sens de la marée et le douzième en cours, un tableau matin / a
 - **Alerte de grande marée**, 2 jours avant, avec les heures des pleines mers du jour.
 - **Montre connectée** (facultative, indépendante du téléphone) : *notification complète* (même texte, sans image, envoyée même sans téléphone) ou *court avis* envoyé seulement si la notification du téléphone est bien partie. Avec une **Apple Watch**, les notifications de l'iPhone s'y affichent déjà : laissez la montre désactivée. Avec **Wear OS**, choisissez le service notify propre à la montre.
 - **Événements** `outdoor_brief_daily_summary` et `outdoor_brief_spring_tide_upcoming`, émis même si les notifications sont coupées, pour vos propres automatisations.
+- **Plusieurs ports** : notification propre à chaque port, ou une seule notification regroupée (une ligne par port, tableaux empilés dans l'image), envoyée selon les réglages du plus ancien port regroupé.
+- **Ouvrir au toucher** : chemin d'un tableau de bord, par exemple `/lovelace/0`.
+- **Téléphone admin en entité notify** (`notify.iphone_…`) : Outdoor Brief envoie au service `notify.mobile_app_…` du même appareil, seul capable de joindre l'image.
 - **Test** : l'action `outdoor_brief.send_summary` envoie le résumé tout de suite.
 
 Une entrée créée avant la 0.3 n'envoie rien tant que vous n'avez pas choisi de fréquence dans ses options.
