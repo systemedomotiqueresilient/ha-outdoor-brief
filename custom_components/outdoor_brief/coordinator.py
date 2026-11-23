@@ -50,6 +50,7 @@ class OutdoorBriefCoordinator(DataUpdateCoordinator[BriefData]):
             update_interval=REFRESH_INTERVAL,
         )
         self.device_id: str = entry.data[CONF_PORT_DEVICE]
+        self.notifier: Any = None  # alerts.Notifier, posé par async_setup_entry
 
     async def _call(self, service: str) -> Any:
         if not self.hass.services.has_service(MAREES_DOMAIN, service):

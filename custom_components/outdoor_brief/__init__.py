@@ -10,24 +10,71 @@ from homeassistant.components.frontend import add_extra_js_url
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import (
+    HomeAssistant,
+    ServiceCall,
+    ServiceResponse,
+    SupportsResponse,
+    callback,
+)
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.typing import ConfigType
+from homeassistant.util import dt as dt_util
+import voluptuous as vol
 
-from .const import CARD_FILE, DOMAIN, FRONTEND_URL, RECOMPUTE_INTERVAL, VERSION
+from .alerts import Notifier
+from .const import (
+    CARD_FILE,
+    DOMAIN,
+    FRONTEND_URL,
+    RECOMPUTE_INTERVAL,
+    SERVICE_SEND_SUMMARY,
+    VERSION,
+)
 from .coordinator import OutdoorBriefCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[Platform] = [Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.IMAGE, Platform.SENSOR]
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 type OutdoorBriefConfigEntry = ConfigEntry[OutdoorBriefCoordinator]
 
 
+SEND_SCHEMA = vol.Schema({vol.Optional("config_entry_id"): cv.string})
+
+
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Carte Lovelace livrée avec l'intégration : aucune ressource à ajouter à la main."""
+    """Action de test des notifications, puis carte Lovelace livrée avec l'intégration."""
+
+    async def _send_summary(call: ServiceCall) -> ServiceResponse:
+        wanted = call.data.get("config_entry_id")
+        entries = [
+            e
+            for e in hass.config_entries.async_loaded_entries(DOMAIN)
+            if wanted in (None, e.entry_id)
+        ]
+        if not entries:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN, translation_key="entry_not_loaded"
+            )
+        results = {}
+        for entry in entries:
+            notifier: Notifier = entry.runtime_data.notifier
+            outcome = await notifier.async_run(dt_util.now(), force=True)
+            results[entry.title] = outcome["summary"]
+        return {"sent": results}
+
+    hass.services.async_register(
+        DOMAIN,
+        SERVICE_SEND_SUMMARY,
+        _send_summary,
+        schema=SEND_SCHEMA,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+
     if "frontend" not in hass.config.components or hass.http is None:
         _LOGGER.debug("Interface web absente : carte Outdoor Brief non enregistrée")
         return True
@@ -43,6 +90,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: OutdoorBriefConfigEntry)
     coordinator = OutdoorBriefCoordinator(hass, entry)
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinator
+    coordinator.notifier = Notifier(hass, entry, coordinator)
 
     # Le marnage et le douzième dépendent de l'heure : on les recalcule sans relire la source.
     @callback
@@ -52,6 +100,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: OutdoorBriefConfigEntry)
     entry.async_on_unload(async_track_time_interval(hass, _recompute, RECOMPUTE_INTERVAL))
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    await coordinator.notifier.async_start()
+    entry.async_on_unload(coordinator.notifier.stop)
     return True
 
 

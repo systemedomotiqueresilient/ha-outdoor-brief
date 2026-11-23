@@ -32,10 +32,29 @@
           "spring_tide_threshold": "Un jour compte comme grande marée quand son plus fort coefficient atteint cette valeur. 100 est la convention habituelle ; baissez-le pour être prévenu plus souvent des fortes marées (décembre 2026 culmine à 99, par exemple).",
           "admin_notify_target": "Un service notify.mobile_app_* ou une entité notify de l'application Companion. Prérempli avec le téléphone déjà choisi dans une autre intégration SDR, s'il y en a un. Servira aux notifications à partir de la version 0.3."
         }
+      },
+      "notifications": {
+        "title": "Notifications",
+        "description": "Les notifications du téléphone utilisent le téléphone admin choisi à l'écran précédent ; le résumé du jour porte l'image en pièce jointe. La montre est facultative et indépendante du téléphone.\n\nApple Watch : les notifications de l'iPhone s'y affichent déjà, laissez la montre désactivée pour éviter les doublons. Wear OS : choisissez le service notify propre à la montre.",
+        "data": {
+          "notify_frequency": "Résumé du jour",
+          "notify_time": "Heure d'envoi",
+          "image_theme": "Thème de l'image",
+          "watch_mode": "Montre",
+          "watch_notify_target": "Cible notify de la montre"
+        },
+        "data_description": {
+          "notify_frequency": "Chaque jour, seulement les jours remarquables (coefficient du jour au seuil des grandes marées, ou grande marée dans les 2 jours), ou jamais. L'alerte de grande marée (2 jours avant) part sauf avec « Jamais ».",
+          "notify_time": "Heure du résumé du jour (fuseau de Home Assistant).",
+          "image_theme": "Couleurs de l'image du résumé jointe à la notification du téléphone.",
+          "watch_mode": "Désactivée ; notification complète (même texte, sans image, envoyée même sans téléphone) ; ou court avis, envoyé seulement si la notification du téléphone est bien partie.",
+          "watch_notify_target": "Un service ou une entité notify de la montre, par exemple notify.mobile_app_galaxy_watch."
+        }
       }
     },
     "error": {
-      "invalid_target": "Indiquez un service ou une entité notify, par exemple notify.mobile_app_mon_telephone."
+      "invalid_target": "Indiquez un service ou une entité notify, par exemple notify.mobile_app_mon_telephone.",
+      "watch_target_required": "Choisissez la cible notify de la montre, ou désactivez la montre."
     },
     "abort": {
       "already_configured": "Ce port est déjà configuré.",
@@ -45,6 +64,13 @@
   "options": {
     "step": {
       "init": {
+        "title": "Outdoor Brief",
+        "menu_options": {
+          "settings": "Réglages (seuil des grandes marées, téléphone admin)",
+          "notifications": "Notifications (résumé, heure, image, montre)"
+        }
+      },
+      "settings": {
         "title": "Réglages",
         "description": "Ces réglages restent modifiables ensuite, depuis les options de l'intégration.",
         "data": {
@@ -55,16 +81,55 @@
           "spring_tide_threshold": "Un jour compte comme grande marée quand son plus fort coefficient atteint cette valeur. 100 est la convention habituelle ; baissez-le pour être prévenu plus souvent des fortes marées (décembre 2026 culmine à 99, par exemple).",
           "admin_notify_target": "Un service notify.mobile_app_* ou une entité notify de l'application Companion. Prérempli avec le téléphone déjà choisi dans une autre intégration SDR, s'il y en a un. Servira aux notifications à partir de la version 0.3."
         }
+      },
+      "notifications": {
+        "title": "Notifications",
+        "description": "Les notifications du téléphone utilisent le téléphone admin choisi à l'écran précédent ; le résumé du jour porte l'image en pièce jointe. La montre est facultative et indépendante du téléphone.\n\nApple Watch : les notifications de l'iPhone s'y affichent déjà, laissez la montre désactivée pour éviter les doublons. Wear OS : choisissez le service notify propre à la montre.",
+        "data": {
+          "notify_frequency": "Résumé du jour",
+          "notify_time": "Heure d'envoi",
+          "image_theme": "Thème de l'image",
+          "watch_mode": "Montre",
+          "watch_notify_target": "Cible notify de la montre"
+        },
+        "data_description": {
+          "notify_frequency": "Chaque jour, seulement les jours remarquables (coefficient du jour au seuil des grandes marées, ou grande marée dans les 2 jours), ou jamais. L'alerte de grande marée (2 jours avant) part sauf avec « Jamais ».",
+          "notify_time": "Heure du résumé du jour (fuseau de Home Assistant).",
+          "image_theme": "Couleurs de l'image du résumé jointe à la notification du téléphone.",
+          "watch_mode": "Désactivée ; notification complète (même texte, sans image, envoyée même sans téléphone) ; ou court avis, envoyé seulement si la notification du téléphone est bien partie.",
+          "watch_notify_target": "Un service ou une entité notify de la montre, par exemple notify.mobile_app_galaxy_watch."
+        }
       }
     },
     "error": {
-      "invalid_target": "Indiquez un service ou une entité notify, par exemple notify.mobile_app_mon_telephone."
+      "invalid_target": "Indiquez un service ou une entité notify, par exemple notify.mobile_app_mon_telephone.",
+      "watch_target_required": "Choisissez la cible notify de la montre, ou désactivez la montre."
     }
   },
   "selector": {
     "profile": {
       "options": {
         "coastal": "Littoral"
+      }
+    },
+    "notify_frequency": {
+      "options": {
+        "daily": "Chaque jour",
+        "remarkable": "Jours remarquables seulement",
+        "never": "Jamais"
+      }
+    },
+    "image_theme": {
+      "options": {
+        "light": "Clair",
+        "dark": "Sombre"
+      }
+    },
+    "watch_mode": {
+      "options": {
+        "off": "Désactivée",
+        "full": "Notification complète",
+        "notice": "Court avis (téléphone prévenu)"
       }
     }
   },
@@ -85,6 +150,11 @@
       "admin_phone": {
         "name": "Téléphone admin"
       }
+    },
+    "image": {
+      "summary_image": {
+        "name": "Image du résumé"
+      }
     }
   },
   "exceptions": {
@@ -96,6 +166,21 @@
     },
     "no_tide_data": {
       "message": "Marées France n'a renvoyé aucune marée pour ce port."
+    },
+    "entry_not_loaded": {
+      "message": "Aucune entrée Outdoor Brief n'est chargée."
+    }
+  },
+  "services": {
+    "send_summary": {
+      "name": "Envoyer le résumé maintenant",
+      "description": "Envoie tout de suite le résumé du jour au téléphone (et à la montre), sans tenir compte de la fréquence. Utile pour tester les notifications.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Entrée Outdoor Brief",
+          "description": "Laisser vide pour envoyer le résumé de chaque port."
+        }
+      }
     }
   }
 }

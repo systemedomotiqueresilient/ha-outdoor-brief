@@ -4,7 +4,7 @@ from datetime import timedelta
 from typing import Final
 
 DOMAIN: Final = "outdoor_brief"
-VERSION: Final = "0.2.2"  # identique à manifest.json et au fichier VERSION
+VERSION: Final = "0.3.0"  # identique à manifest.json et au fichier VERSION
 
 # Carte Lovelace (servie par l'intégration elle-même)
 FRONTEND_URL: Final = "/outdoor_brief_static"
@@ -36,3 +36,34 @@ REFRESH_INTERVAL: Final = timedelta(hours=1)
 RECOMPUTE_INTERVAL: Final = timedelta(minutes=5)
 
 UPCOMING_SPRING_TIDES: Final = 5
+
+# Notifications (0.3)
+CONF_NOTIFY_FREQUENCY: Final = "notify_frequency"
+FREQ_DAILY: Final = "daily"
+FREQ_REMARKABLE: Final = "remarkable"
+FREQ_NEVER: Final = "never"
+FREQUENCIES: Final = (FREQ_DAILY, FREQ_REMARKABLE, FREQ_NEVER)
+DEFAULT_NEW_FREQUENCY: Final = FREQ_DAILY  # proposé à l'installation
+# Entrée créée avant la 0.3 (option absente) : rien n'est envoyé tant qu'on n'a pas choisi.
+FALLBACK_FREQUENCY: Final = FREQ_NEVER
+
+CONF_NOTIFY_TIME: Final = "notify_time"
+DEFAULT_NOTIFY_TIME: Final = "07:00:00"
+
+CONF_IMAGE_THEME: Final = "image_theme"
+THEMES: Final = ("light", "dark")
+DEFAULT_IMAGE_THEME: Final = "light"
+
+# Montre : seconde cible, indépendante du téléphone admin
+CONF_WATCH_TARGET: Final = "watch_notify_target"
+CONF_WATCH_MODE: Final = "watch_mode"
+WATCH_OFF: Final = "off"
+WATCH_FULL: Final = "full"  # même texte que le téléphone, sans image, même sans téléphone
+WATCH_NOTICE: Final = "notice"  # court avis, seulement si le téléphone a bien reçu
+WATCH_MODES: Final = (WATCH_OFF, WATCH_FULL, WATCH_NOTICE)
+
+SPRING_TIDE_NOTICE_DAYS: Final = 2
+
+EVENT_DAILY_SUMMARY: Final = f"{DOMAIN}_daily_summary"
+EVENT_SPRING_TIDE: Final = f"{DOMAIN}_spring_tide_upcoming"
+SERVICE_SEND_SUMMARY: Final = "send_summary"

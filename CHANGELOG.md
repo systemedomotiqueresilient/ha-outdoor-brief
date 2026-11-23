@@ -2,6 +2,24 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [0.3.0] - 2026-11-23
+
+### Ajouté
+- **Image du résumé** : entité `image` (`<entry_id>_summary_image`), PNG de 1080 px de large dessiné localement avec Pillow (fourni par Home Assistant), même contenu que la carte, thème clair ou sombre. Redessinée seulement quand le résumé change.
+- **Notifications sur le téléphone admin** (convention SDR) :
+  - résumé du jour à l'heure choisie (07:00 par défaut), chaque jour, seulement les jours remarquables, ou jamais. Jour remarquable en 0.3 : coefficient du jour au seuil des grandes marées, ou grande marée dans les 2 jours ;
+  - alerte de grande marée 2 jours avant, avec les heures des pleines mers du jour (sauf « Jamais ») ;
+  - l'image du résumé est jointe quand la cible est un service `notify.mobile_app_*` (une entité notify ne transporte pas de pièce jointe).
+- **Montre** (facultative, indépendante du téléphone) : cible notify à part, et trois modes : désactivée, notification complète (même texte, sans image, envoyée même sans téléphone), ou court avis envoyé seulement si la notification du téléphone est bien partie.
+- **Anti-doublon persistant** : un même envoi ne part qu'une fois par jour (ou par grande marée), même après un redémarrage.
+- **Événements** `outdoor_brief_daily_summary` (contenu du résumé) et `outdoor_brief_spring_tide_upcoming` (J-2), émis même si les notifications sont coupées.
+- **Action `outdoor_brief.send_summary`** : envoie le résumé tout de suite, pour tester (réponse : port → envoyé ou non).
+- **Écran « Notifications »** à l'installation ; les options deviennent un menu (Réglages / Notifications).
+- **Police Roboto** (SIL OFL 1.1, réduite aux caractères latins, 2 × 32 Ko) livrée dans `fonts/` : la police par défaut de Pillow n'a pas les lettres accentuées.
+
+### Modifié
+- **Une entrée créée avant la 0.3 n'envoie rien** tant que la fréquence n'a pas été choisie dans les options : pas de notification surprise après la mise à jour.
+
 ## [0.2.2] - 2026-11-22
 
 ### Corrigé

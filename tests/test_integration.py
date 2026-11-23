@@ -75,6 +75,22 @@ async def test_full_flow(hass: HomeAssistant, marees: FakeMarees, freezer) -> No
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"], {CONF_SPRING_THRESHOLD: 95.0, CONF_ADMIN_NOTIFY_TARGET: MOBILE}
     )
+    assert result["step_id"] == "notifications"
+    notif = {
+        "notify_frequency": "daily",
+        "notify_time": "07:00:00",
+        "image_theme": "light",
+        "watch_mode": "notice",
+    }
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], notif)
+    assert result["errors"] == {"watch_notify_target": "watch_target_required"}
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {**notif, "watch_notify_target": "montre"}
+    )
+    assert result["errors"] == {"watch_notify_target": "invalid_target"}
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {**notif, "watch_notify_target": "notify.mobile_app_galaxy_watch"}
+    )
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == "Port-Louis (Locmalo)"
     assert result["data"] == {
@@ -82,7 +98,11 @@ async def test_full_flow(hass: HomeAssistant, marees: FakeMarees, freezer) -> No
         CONF_PORT_DEVICE: marees.device.id,
         CONF_ADMIN_NOTIFY_TARGET: MOBILE,
     }
-    assert result["options"] == {CONF_SPRING_THRESHOLD: 95}
+    assert result["options"] == {
+        CONF_SPRING_THRESHOLD: 95,
+        **notif,
+        "watch_notify_target": "notify.mobile_app_galaxy_watch",
+    }
     await hass.async_block_till_done()
     # Le port est toujours passé à l'action : sans lui, Marées France répond pour un autre port
     assert {data["device_id"] for _, data in marees.calls} == {marees.device.id}
@@ -113,6 +133,10 @@ async def test_flow_without_marees_france(hass: HomeAssistant) -> None:
 
 async def test_options_flow(hass: HomeAssistant, entry) -> None:
     result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] is FlowResultType.MENU
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"next_step_id": "settings"}
+    )
     result = await hass.config_entries.options.async_configure(
         result["flow_id"], {CONF_SPRING_THRESHOLD: 120, CONF_ADMIN_NOTIFY_TARGET: "x"}
     )
@@ -126,6 +150,27 @@ async def test_options_flow(hass: HomeAssistant, entry) -> None:
     assert entry.data[CONF_ADMIN_NOTIFY_TARGET] == MOBILE
     state = hass.states.get(_entity(hass, entry, "next_spring_tide"))
     assert state.state == "2026-11-25"  # le seuil 95 est appliqué après rechargement
+
+    # Écran Notifications : les autres options sont conservées
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"next_step_id": "notifications"}
+    )
+    assert result["step_id"] == "notifications"
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {
+            "notify_frequency": "remarkable",
+            "notify_time": "06:30:00",
+            "image_theme": "dark",
+            "watch_mode": "off",
+        },
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    await hass.async_block_till_done()
+    assert entry.options[CONF_SPRING_THRESHOLD] == 95
+    assert entry.options["notify_frequency"] == "remarkable"
+    assert entry.options["watch_notify_target"] is None
 
 
 # --- Capteurs -------------------------------------------------------------------

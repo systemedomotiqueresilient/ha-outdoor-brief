@@ -10,7 +10,10 @@ Intégration Home Assistant (domaine `outdoor_brief`). Le résumé du jour pour 
 - **Les entités ne sont créées que pour le profil et les données choisis.** Une source absente rend indisponibles seulement les entités qui en dépendent.
 - **Contrat public** : `unique_id` et attributs du résumé (`schema_version`). Un attribut n'est renommé ou supprimé qu'en version majeure, après une version où il est signalé obsolète.
 - **Carte** : JavaScript sans dépendance ni étape de build ; l'innerHTML ne reçoit que le gabarit fixe, les données passent par textContent (un test le vérifie).
-- **Aucune nouvelle dépendance Python.** Le calcul lunaire sera écrit en Python pur ; l'image utilisera Pillow, déjà présent dans HA (à confirmer en 0.3).
+- **Aucune nouvelle dépendance Python.** Le calcul lunaire sera écrit en Python pur. L'image utilise Pillow, dépendance de HA core (confirmé : `Pillow==12.0.0` dans les requirements de HA 2026.2). Police Roboto (OFL) livrée dans `fonts/`, réduite aux caractères latins : la police par défaut de Pillow n'a pas d'accents, et Roboto n'a ni « ᵉ » ni flèches (écrire « 4e »).
+- **Notifications** : téléphone = cible admin (entry.data) via `async_notify_admin` ; montre = option séparée (off / full / notice), « notice » seulement si le téléphone a reçu. Entrée sans option de fréquence = « never » (pas de surprise après mise à jour). Anti-doublon dans un `Store` par entrée. Événements toujours émis.
+- **Tests de minuterie** : `async_fire_time_changed(hass, dt_util.utcnow(), fire_all=True)` puis `async_block_till_done(wait_background_tasks=True)`, sinon les envois lancés par l'heure ne sont pas attendus.
+- **Jamais de méthode `_context` sur une entité** : elle écrase `Entity._context`.
 - **Aucune donnée personnelle dans le dépôt public** (ni coordonnées GPS réelles, ni identifiants d'appareil). Commits avec l'adresse GitHub noreply.
 - **Mathieu pousse lui-même les commits** (à partir d'un patch ou d'un bundle).
 

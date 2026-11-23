@@ -31,21 +31,12 @@ from .const import (
     CONF_SPRING_THRESHOLD,
     DEFAULT_SPRING_THRESHOLD,
     DOMAIN,
-    SCHEMA_VERSION,
     UPCOMING_SPRING_TIDES,
     VERSION,
 )
 from .coordinator import BriefData, OutdoorBriefCoordinator
-from .tides import (
-    HIGH,
-    TWELFTHS,
-    month_max,
-    spring_tides,
-    surrounding,
-    tidal_range,
-    tides_of_day,
-    twelfth,
-)
+from .summary import build_summary
+from .tides import HIGH, TWELFTHS, spring_tides, surrounding, tidal_range, twelfth
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,27 +97,7 @@ def _next_spring_attrs(ctx: Context) -> dict[str, Any]:
 
 def _summary_attrs(ctx: Context) -> dict[str, Any]:
     """Contrat public (schema_version) : lu par la carte, l'image et les tiers."""
-    previous, next_tide = surrounding(ctx.data.tides, ctx.now)
-    upcoming = _spring(ctx)
-    best = month_max(ctx.data.coefficients, ctx.today)
-    return {
-        "schema_version": SCHEMA_VERSION,
-        "port": ctx.port,
-        "date": ctx.today.isoformat(),
-        "tides": [tide.as_dict() for tide in tides_of_day(ctx.data.tides, ctx.today)],
-        "coefficients": ctx.data.coefficients.get(ctx.today, []),
-        "tidal_range": tidal_range(previous, next_tide),
-        "tide_twelfth": twelfth(previous, next_tide, ctx.now),
-        "next_tide": next_tide.as_dict() if next_tide else None,
-        "next_spring_tide": (
-            {"date": upcoming[0][0].isoformat(), "coefficient": upcoming[0][1]}
-            if upcoming
-            else None
-        ),
-        "month_max": {"date": best[0].isoformat(), "coefficient": best[1]} if best else None,
-        "spring_tide_threshold": ctx.threshold,
-        "source": "SHOM via Marées France",
-    }
+    return build_summary(ctx.data, ctx.now, ctx.threshold, ctx.port)
 
 
 SENSORS: tuple[BriefSensorDescription, ...] = (
@@ -162,7 +133,7 @@ SENSORS: tuple[BriefSensorDescription, ...] = (
 )
 
 
-def _device(entry: ConfigEntry) -> DeviceInfo:
+def device_info(entry: ConfigEntry) -> DeviceInfo:
     return DeviceInfo(
         identifiers={(DOMAIN, entry.entry_id)},
         name=f"Outdoor Brief {entry.title}",
@@ -199,7 +170,7 @@ class BriefSensor(CoordinatorEntity[OutdoorBriefCoordinator], SensorEntity):
         self.entity_description = description
         self._entry = entry
         self._attr_unique_id = f"{entry.entry_id}_{description.key}"
-        self._attr_device_info = _device(entry)
+        self._attr_device_info = device_info(entry)
 
     def _snapshot(self) -> Context:
         now = dt_util.now()
@@ -233,7 +204,7 @@ class AdminPhoneSensor(SensorEntity):
     def __init__(self, entry: ConfigEntry) -> None:
         self._entry = entry
         self._attr_unique_id = f"{entry.entry_id}{ADMIN_TARGET_SUFFIX}"
-        self._attr_device_info = _device(entry)
+        self._attr_device_info = device_info(entry)
 
     @property
     def _target(self) -> str | None:
