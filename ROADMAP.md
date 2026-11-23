@@ -3,6 +3,7 @@
 Validée par Mathieu le 2026-11-21 (cahier des charges « Outdoor Brief — Cahier des charges »).
 
 ## Fait
+- **0.3.3** : module commun admin_phone 1.2.0 (Outdoor Brief reconnu comme intégration sœur).
 - **0.3.2** : l'action de test n'envoie plus en double les ports regroupés.
 - **0.3.1** : image envoyée aussi quand le téléphone admin est une entité notify ; notification regroupée pour plusieurs ports ; ouverture d'un tableau de bord au toucher.
 - **0.3.0** : image du résumé, notifications (résumé quotidien, grande marée J-2), montre (complète ou avis), événements, action de test.
@@ -19,5 +20,4 @@ Validée par Mathieu le 2026-11-21 (cahier des charges « Outdoor Brief — Cahi
 
 ## Pistes
 - **Port secondaire** (décalage horaire et facteur de hauteur) : seulement sur demande, Marées France couvrant déjà les petits ports.
-- **Module commun** : faire gérer par `async_notify_admin` (ha-sdr 1.2.0) la substitution entité notify → service mobile_app, pour que toutes les intégrations SDR puissent joindre une image.
-- **SIBLING_PLATFORMS** : faire ajouter `outdoor_brief` au module commun dans `ha-sdr` (version 1.2.0), pour que les intégrations sœurs lisent aussi ce téléphone admin.
+- **Module commun 1.3.0** (décidé par Mathieu le 2026-11-23) : reconnaissance ouverte des sœurs et envoi enrichi vers une entité notify mobile_app. À sa sortie, recopier le module, utiliser `admin_sensor_attributes` et retirer le contournement local `rich_target`.

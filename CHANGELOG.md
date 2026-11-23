@@ -2,6 +2,11 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [0.3.3] - 2026-11-23
+
+### Modifié
+- **Module commun `admin_phone.py` 1.2.0**, recopié tel quel depuis `ha-sdr` (commit 77a8992, SHA-256 `1d720150…545b`, vérifié par un test). Outdoor Brief fait désormais partie des intégrations sœurs : le téléphone choisi ici est proposé à l'installation des autres intégrations SDR. Aucun autre changement. Le contournement local `rich_target` reste en place jusqu'à la 1.3.0 du module, qui l'intégrera pour toutes les intégrations.
+
 ## [0.3.2] - 2026-11-23
 
 ### Corrigé

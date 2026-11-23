@@ -220,6 +220,21 @@ async def test_recompute_without_refetch(hass: HomeAssistant, entry, marees, fre
     assert len(marees.calls) == calls  # aucune relecture de Marées France
 
 
+async def test_own_phone_seen_as_sibling(hass: HomeAssistant, marees, freezer) -> None:
+    """admin_phone 1.2.0 : le téléphone d'Outdoor Brief est proposé aux intégrations sœurs."""
+    freezer.move_to(NOW)
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={CONF_PROFILE: "coastal", CONF_PORT_DEVICE: marees.device.id,
+              CONF_ADMIN_NOTIFY_TARGET: MOBILE},
+    )
+    entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    assert "outdoor_brief" in admin_phone.SIBLING_PLATFORMS
+    assert admin_phone.find_admin_targets(hass) == [MOBILE]
+
+
 async def test_admin_phone_sensor(hass: HomeAssistant, entry) -> None:
     registry = er.async_get(hass)
     entity_id = registry.async_get_entity_id(
@@ -280,9 +295,9 @@ async def test_unload(hass: HomeAssistant, entry) -> None:
 def test_module_copy_and_versions() -> None:
     root = Path(__file__).parents[1]
     module = root / "custom_components" / DOMAIN / "admin_phone.py"
-    assert admin_phone.MODULE_VERSION == "1.1.0"
+    assert admin_phone.MODULE_VERSION == "1.2.0"
     assert hashlib.sha256(module.read_bytes()).hexdigest() == (
-        "32b3619e975eaeb0606252b4cdca9f3d2402854193f88619cd4bde383b30e1f9"
+        "1d720150ff1c709547018236afcb1c555e630c504be0c34b20fe0b79ed80545b"
     )
     manifest = json.loads((root / "custom_components" / DOMAIN / "manifest.json").read_text())
     assert manifest["version"] == VERSION == (root / "VERSION").read_text().strip()

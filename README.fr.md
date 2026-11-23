@@ -4,7 +4,7 @@
 
 Le **résumé du jour pour ce qui se passe dehors**, dans Home Assistant. La version 0.2 couvre le littoral : les marées du jour, le marnage, le douzième de marée en cours et la prochaine grande marée, rassemblés dans un capteur de résumé affichés par une carte Lovelace et envoyés chaque matin sur votre téléphone, avec l'image du résumé, et si vous le souhaitez sur une montre connectée.
 
-> **Statut : 0.3.2, début de développement.** La météo marine (0.4) et le profil potager (0.5) sont dans la [feuille de route](ROADMAP.md).
+> **Statut : 0.3.3, début de développement.** La météo marine (0.4) et le profil potager (0.5) sont dans la [feuille de route](ROADMAP.md).
 
 ## D'où viennent les données
 

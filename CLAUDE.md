@@ -26,7 +26,8 @@ Intégration Home Assistant (domaine `outdoor_brief`). Le résumé du jour pour 
 ## Module commun `admin_phone.py`
 - **Référence** : dépôt privé `systemedomotiqueresilient/ha-sdr`. Copié **tel quel**, jamais modifié ici. Le test `test_module_copy_and_versions` vérifie son SHA-256.
 - **Convention** : capteur diagnostic `<entry_id>_admin_notify_target`, valeur dans `entry.data["admin_notify_target"]`, envoi par `async_notify_admin`.
-- **À faire dans ha-sdr** : ajouter `outdoor_brief` à `SIBLING_PLATFORMS` (1.2.0).
+- **Version copiée** : 1.2.0 (77a8992, SHA-256 1d720150…545b), outdoor_brief dans SIBLING_PLATFORMS.
+- **1.3.0 à venir** (décision de Mathieu du 2026-11-23) : reconnaissance ouverte des sœurs + envoi enrichi vers une entité notify mobile_app. À la recopie : utiliser `admin_sensor_attributes` dans le capteur, nouvelle forme de `find_admin_targets`, retirer `rich_target` d'alerts.py.
 - **Synchronisation entre agents** : carnet Evernote « HA Intégrations – Synchro IA » (00 : protocole, 01 : spécification, 02 : journal, à compléter à la fin ; 15 : fiche Outdoor Brief).
 
 ## Versions
