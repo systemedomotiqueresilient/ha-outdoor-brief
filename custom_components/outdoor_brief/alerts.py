@@ -27,7 +27,9 @@ from homeassistant.util import dt as dt_util, slugify
 
 from .admin_phone import CONF_ADMIN_NOTIFY_TARGET, async_notify_admin, normalize_target
 from .const import (
+    CONF_EXTRA_TARGETS,
     CONF_GROUPING,
+    CONF_MESSAGE_STYLE,
     CONF_NOTIFY_FREQUENCY,
     CONF_NOTIFY_TIME,
     CONF_SPRING_THRESHOLD,
@@ -45,6 +47,7 @@ from .const import (
     FREQ_REMARKABLE,
     GROUPING_GROUPED,
     SPRING_TIDE_NOTICE_DAYS,
+    STYLE_SHORT,
     WATCH_FULL,
     WATCH_NOTICE,
     WATCH_OFF,
@@ -59,6 +62,8 @@ MESSAGES = {
     "fr": {
         "summary_title": "🌊 {port}",
         "group_title": "🌊 Marées du jour",
+        "short": "Coef {coefs} · prochaine {kind} {time}",
+        "short_group": "Coef {coefs} · {n} ports, détails dans l'image",
         "notice_group": "Marées du jour envoyées sur le téléphone",
         "spring_title": "🌕 Grande marée dans {n} jours",
         "spring_message": "{port} : {day}, coef {coef}{times}",
@@ -72,6 +77,8 @@ MESSAGES = {
     "en": {
         "summary_title": "🌊 {port}",
         "group_title": "🌊 Today's tides",
+        "short": "Coef {coefs} · next {kind} {time}",
+        "short_group": "Coef {coefs} · {n} ports, details in the image",
         "notice_group": "Today's tides sent to the phone",
         "spring_title": "🌕 Spring tide in {n} days",
         "spring_message": "{port}: {day}, coef {coef}{times}",
@@ -132,6 +139,28 @@ def group_members(hass: HomeAssistant) -> list[ConfigEntry]:
         if entry.options.get(CONF_GROUPING) == GROUPING_GROUPED
         and getattr(entry.runtime_data, "notifier", None) is not None
     ]
+
+
+def short_message(summaries: list[dict[str, Any]], language: str | None) -> str:
+    """Texte court, quand l'image jointe porte le détail."""
+    msg = _messages(language)
+    first = summaries[0]
+    coefs = "-".join(str(c) for c in first.get("coefficients") or []) or "—"
+    if len(summaries) > 1:
+        return msg["short_group"].format(coefs=coefs, n=len(summaries))
+    nxt = first.get("next_tide")
+    if not nxt:
+        return f"{msg['coef'].capitalize()} {coefs}"
+    return msg["short"].format(coefs=coefs, kind=msg[nxt["type"]], time=fmt_time(nxt["time"]))
+
+
+def is_rich(hass: HomeAssistant, target: str | None) -> bool:
+    """Cible capable de recevoir image, tag et lien : un service notify.mobile_app_*."""
+    return bool(
+        target
+        and target.startswith("notify.mobile_app_")
+        and hass.services.has_service("notify", target.removeprefix("notify."))
+    )
 
 
 def group_message(summaries: list[dict[str, Any]], language: str | None) -> str:
@@ -310,32 +339,69 @@ class Notifier:
         url = str(self.entry.options.get(CONF_TAP_URL) or "").strip()
         return {"url": url, "clickAction": url} if url else {}
 
-    async def _async_deliver(
-        self, kind: str, title: str, message: str, notice: str, image: bool
+    @property
+    def extra_targets(self) -> list[str]:
+        values = self.entry.options.get(CONF_EXTRA_TARGETS) or []
+        return [t for t in (normalize_target(v) for v in values) if t]
+
+    async def _async_send_to(
+        self,
+        target: str,
+        title: str,
+        message: str,
+        short: str | None,
+        image: bool,
+        tag: str,
     ) -> bool:
-        """Téléphone puis montre. Renvoie True si au moins un envoi a abouti."""
+        """Un envoi. Service mobile_app : image, tag, lien et texte court si l'image part.
+        Autre canal (Telegram, ntfy, e-mail…) : titre et texte détaillé seulement."""
+        target = rich_target(self.hass, target)
+        if not is_rich(self.hass, target):
+            return await async_notify_admin(self.hass, target, title, message)
+        data: dict[str, Any] = {"tag": tag, "group": DOMAIN, **self._tap_data()}
+        url = self._image_url() if image else None
+        if url:
+            data["image"] = url
+            if short and self.entry.options.get(CONF_MESSAGE_STYLE, STYLE_SHORT) == STYLE_SHORT:
+                message = short
+        return await async_notify_admin(self.hass, target, title, message, data)
+
+    async def _async_deliver(
+        self,
+        kind: str,
+        title: str,
+        message: str,
+        notice: str,
+        image: bool,
+        short: str | None = None,
+    ) -> bool:
+        """Téléphone admin, destinataires supplémentaires, puis montre.
+
+        Renvoie True si au moins un envoi a abouti.
+        """
         tag = f"{DOMAIN}_{self.entry.entry_id}_{kind}"
         phone_ok = False
         if self.phone:
-            data: dict[str, Any] = {"tag": tag, "group": DOMAIN, **self._tap_data()}
-            if image and (url := self._image_url()):
-                data["image"] = url
-            target = rich_target(self.hass, self.phone)
-            phone_ok = await async_notify_admin(self.hass, target, title, message, data)
+            phone_ok = await self._async_send_to(self.phone, title, message, short, image, tag)
+        extra_ok = False
+        for target in self.extra_targets:
+            if target != self.phone:
+                extra_ok |= await self._async_send_to(target, title, message, short, image, tag)
         watch_ok = False
         if self.watch:
-            watch = rich_target(self.hass, self.watch)
             if self.watch_mode == WATCH_FULL:
-                watch_ok = await async_notify_admin(
-                    self.hass, watch, title, message, {"tag": tag, **self._tap_data()}
-                )
+                watch_ok = await self._async_send_to(self.watch, title, message, None, False, tag)
             elif self.watch_mode == WATCH_NOTICE and phone_ok:
                 watch_ok = await async_notify_admin(
-                    self.hass, watch, "Outdoor Brief", notice, {"tag": tag}
+                    self.hass,
+                    rich_target(self.hass, self.watch),
+                    "Outdoor Brief",
+                    notice,
+                    {"tag": tag},
                 )
-        if not (self.phone or self.watch):
+        if not (self.phone or self.watch or self.extra_targets):
             _LOGGER.debug("Aucune cible de notification pour %s", self.entry.title)
-        return phone_ok or watch_ok
+        return phone_ok or extra_ok or watch_ok
 
     async def _async_send_summary(self, summaries: list[dict[str, Any]]) -> bool:
         language = self.hass.config.language
@@ -347,6 +413,7 @@ class Notifier:
                 group_message(summaries, language),
                 msg["notice_group"],
                 image=True,
+                short=short_message(summaries, language),
             )
         return await self._async_deliver(
             "summary",
@@ -354,6 +421,7 @@ class Notifier:
             summary_message(summaries[0], language),
             msg["notice_summary"].format(port=self.entry.title),
             image=True,
+            short=short_message(summaries, language),
         )
 
     async def _async_send_spring(self, springs: list[tuple[str, dict[str, Any], date]]) -> bool:

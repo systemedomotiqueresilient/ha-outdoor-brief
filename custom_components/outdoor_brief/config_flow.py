@@ -35,8 +35,10 @@ from .admin_phone import (
     suggest_admin_target,
 )
 from .const import (
+    CONF_EXTRA_TARGETS,
     CONF_GROUPING,
     CONF_IMAGE_THEME,
+    CONF_MESSAGE_STYLE,
     CONF_NOTIFY_FREQUENCY,
     CONF_NOTIFY_TIME,
     CONF_PORT_DEVICE,
@@ -56,9 +58,11 @@ from .const import (
     GROUPINGS,
     MAREES_DOMAIN,
     MAX_SPRING_THRESHOLD,
+    MESSAGE_STYLES,
     MIN_SPRING_THRESHOLD,
     PROFILE_COASTAL,
     PROFILES_AVAILABLE,
+    STYLE_SHORT,
     THEMES,
     WATCH_MODES,
     WATCH_OFF,
@@ -104,6 +108,16 @@ def _split(user_input: dict[str, Any]) -> tuple[dict[str, Any], str | None, dict
     return values, normalize_target(raw), errors
 
 
+def _all_notify_targets(hass: HomeAssistant) -> list[str]:
+    """Tous les services et entités notify : Companion, Telegram, ntfy, e-mail…"""
+    services = [
+        f"notify.{name}"
+        for name in hass.services.async_services_for_domain("notify")
+        if name not in ("send_message", "persistent_notification")
+    ]
+    return sorted(set(services) | set(hass.states.async_entity_ids("notify")))
+
+
 def _notifications_schema(
     hass: HomeAssistant, options: dict[str, Any], default_frequency: str
 ) -> vol.Schema:
@@ -134,6 +148,22 @@ def _notifications_schema(
             vol.Required(
                 CONF_IMAGE_THEME, default=options.get(CONF_IMAGE_THEME, DEFAULT_IMAGE_THEME)
             ): choice(CONF_IMAGE_THEME, THEMES),
+            vol.Required(
+                CONF_MESSAGE_STYLE, default=options.get(CONF_MESSAGE_STYLE, STYLE_SHORT)
+            ): choice(CONF_MESSAGE_STYLE, MESSAGE_STYLES),
+            vol.Optional(
+                CONF_EXTRA_TARGETS,
+                description={"suggested_value": options.get(CONF_EXTRA_TARGETS) or []},
+            ): SelectSelector(
+                SelectSelectorConfig(
+                    options=sorted(
+                        set(_all_notify_targets(hass)) | set(options.get(CONF_EXTRA_TARGETS) or [])
+                    ),
+                    multiple=True,
+                    custom_value=True,
+                    mode=SelectSelectorMode.DROPDOWN,
+                )
+            ),
             vol.Optional(
                 CONF_TAP_URL, description={"suggested_value": options.get(CONF_TAP_URL)}
             ): TextSelector(),
@@ -161,6 +191,10 @@ def _check_notifications(user_input: dict[str, Any]) -> tuple[dict[str, Any], di
     elif values.get(CONF_WATCH_MODE, WATCH_OFF) != WATCH_OFF and watch is None:
         errors[CONF_WATCH_TARGET] = "watch_target_required"
     values[CONF_WATCH_TARGET] = watch
+    extras = [str(v).strip() for v in values.get(CONF_EXTRA_TARGETS) or [] if str(v).strip()]
+    if any(not is_valid_target(v) for v in extras):
+        errors[CONF_EXTRA_TARGETS] = "invalid_extra_target"
+    values[CONF_EXTRA_TARGETS] = [normalize_target(v) for v in extras if is_valid_target(v)]
     tap = str(values.get(CONF_TAP_URL) or "").strip()
     if tap and not tap.startswith(("/", "http://", "https://", "homeassistant://")):
         errors[CONF_TAP_URL] = "invalid_tap_url"

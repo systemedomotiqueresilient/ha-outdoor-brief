@@ -79,7 +79,7 @@ async def test_daily_summary_phone_with_image(hass, marees, freezer, sent) -> No
     assert len(sent["phone"]) == 1
     call = sent["phone"][0]
     assert call["title"] == "🌊 Port-Louis (Locmalo)"
-    assert call["message"] == "HW 01:42 · 14:02 | LW 07:47 · 20:10 | coef 57-64"
+    assert call["message"] == "Coef 57-64 · next LW 07:47"  # court : l'image porte le détail
     image_id = er.async_get(hass).async_get_entity_id(
         "image", DOMAIN, f"{entry.entry_id}_summary_image"
     )
@@ -261,10 +261,7 @@ async def test_grouped_ports_send_one_notification(hass, marees, freezer, sent, 
     assert titles.count("🌊 Lorient") == 1  # le port « propre » garde le sien
     assert titles.count("🌕 Spring tide in 2 days") == 2  # groupe + Lorient
     grouped = next(c for c in sent["phone"] if c["title"] == "🌊 Today's tides")
-    assert grouped["message"].splitlines() == [
-        "Port-Louis (Locmalo) : HW 03:07 · 15:30 | LW 09:17 · 21:37 | coef 81-86",
-        "Port-Tudy : HW 03:07 · 15:30 | LW 09:17 · 21:37 | coef 81-86",
-    ]
+    assert grouped["message"] == "Coef 81-86 · 2 ports, details in the image"
     spring = next(
         c for c in sent["phone"]
         if c["title"] == "🌕 Spring tide in 2 days" and "Port-Tudy" in c["message"]
@@ -308,3 +305,55 @@ async def test_send_summary_action_with_group(hass, marees, freezer, sent) -> No
         DOMAIN, "send_summary", {"config_entry_id": second.entry_id}, blocking=True
     )
     assert sent["phone"][-1]["title"] == "🌊 Port-Tudy"
+
+
+# --- 0.3.4 : texte détaillé, destinataires supplémentaires --------------------------------
+
+
+async def test_detailed_style_and_extra_targets(hass, marees, freezer, sent) -> None:
+    """Style détaillé ; autre téléphone Companion avec image ; autre canal en texte seul."""
+    other_phone, telegram = [], []
+    hass.services.async_register(
+        "notify", "mobile_app_ipad", lambda call: other_phone.append(dict(call.data))
+    )
+    hass.services.async_register("notify", "telegram", lambda call: telegram.append(dict(call.data)))
+    await _setup(hass, marees, freezer, "2026-11-21T05:00:00+00:00", notify_frequency="daily",
+                 message_style="detailed",
+                 extra_notify_targets=["notify.mobile_app_ipad", "notify.telegram", PHONE, "x"])
+    await _tick(hass, freezer, PARIS_0700_21)
+    detailed = "HW 01:42 · 14:02 | LW 07:47 · 20:10 | coef 57-64"
+    assert sent["phone"][0]["message"] == detailed
+    assert len(sent["phone"]) == 1  # le téléphone admin en double dans la liste n'est pas renvoyé
+    assert other_phone[0]["message"] == detailed and "image" in other_phone[0]["data"]
+    # Canal non Companion : titre et texte détaillé, sans data (image, tag…) qu'il refuserait
+    assert telegram == [{"title": "🌊 Port-Louis (Locmalo)", "message": detailed}]
+
+
+async def test_short_text_only_when_image_attached(hass, marees, freezer, sent) -> None:
+    """Style court, mais destinataire sans image : il garde le texte détaillé."""
+    telegram = []
+    hass.services.async_register("notify", "telegram", lambda call: telegram.append(dict(call.data)))
+    await _setup(hass, marees, freezer, "2026-11-21T05:00:00+00:00", notify_frequency="daily",
+                 extra_notify_targets=["notify.telegram"], phone=None)
+    await _tick(hass, freezer, PARIS_0700_21)
+    assert telegram[0]["message"] == "HW 01:42 · 14:02 | LW 07:47 · 20:10 | coef 57-64"
+
+
+def test_status_line_fits_width() -> None:
+    from custom_components.outdoor_brief.render import WIDTH, MARGIN, _fit
+    from PIL import ImageDraw
+
+    draw = ImageDraw.Draw(Image.new("RGB", (10, 10)))
+    long = "Marée descendante · 4e douzième · marnage 4,19 m · BM 10:06 · encore plus long"
+    assert draw.textlength(long, font=_fit(draw, long, 36)) <= WIDTH - 2 * MARGIN
+
+
+def test_extra_targets_validation() -> None:
+    from custom_components.outdoor_brief.config_flow import _check_notifications
+
+    _, errors = _check_notifications({"watch_mode": "off", "extra_notify_targets": ["telegram"]})
+    assert errors == {"extra_notify_targets": "invalid_extra_target"}
+    values, errors = _check_notifications(
+        {"watch_mode": "off", "extra_notify_targets": [" notify.telegram ", ""]}
+    )
+    assert not errors and values["extra_notify_targets"] == ["notify.telegram"]

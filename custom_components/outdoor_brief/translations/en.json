@@ -43,7 +43,9 @@
           "watch_mode": "Watch",
           "watch_notify_target": "Watch notify target",
           "notify_grouping": "Several ports",
-          "tap_url": "Open on tap (optional)"
+          "tap_url": "Open on tap (optional)",
+          "message_style": "Notification text",
+          "extra_notify_targets": "Additional recipients (optional)"
         },
         "data_description": {
           "notify_frequency": "Every day, only on remarkable days (today's coefficient reaches the spring tide threshold, or a spring tide within 2 days), or never. The spring tide alert (2 days before) is sent unless set to never.",
@@ -52,14 +54,17 @@
           "watch_mode": "Off; full notification (same text, no image, sent even without a phone); or short notice, sent only when the phone notification went through.",
           "watch_notify_target": "A notify service or entity of the watch, e.g. notify.mobile_app_galaxy_watch.",
           "notify_grouping": "Own notification for this port, or one notification grouping every port set to « grouped ». The grouped notification follows the settings (time, frequency, phone, watch) of the oldest grouped port; the others only add their tides.",
-          "tap_url": "Dashboard path opened when tapping the notification, e.g. /lovelace/0 or /dashboard-meteo/0. Empty: the app just opens."
+          "tap_url": "Dashboard path opened when tapping the notification, e.g. /lovelace/0 or /dashboard-meteo/0. Empty: the app just opens.",
+          "message_style": "Short: only coefficients and next tide, when the summary image is attached (the image carries the details). Detailed: every tide in the text. A target that cannot receive the image (Telegram, ntfy, e-mail…) always gets the detailed text.",
+          "extra_notify_targets": "Other phones or channels: any notify service or entity (another Companion phone, Telegram, Signal, ntfy, Gotify, e-mail…). Companion phones receive the image; other channels receive the title and detailed text."
         }
       }
     },
     "error": {
       "invalid_target": "Enter a notify service or entity, e.g. notify.mobile_app_my_phone.",
       "watch_target_required": "Choose the watch's notify target, or set the watch to Off.",
-      "invalid_tap_url": "Enter a path starting with /, e.g. /lovelace/0."
+      "invalid_tap_url": "Enter a path starting with /, e.g. /lovelace/0.",
+      "invalid_extra_target": "Each recipient must be a notify service or entity, e.g. notify.telegram."
     },
     "abort": {
       "already_configured": "This port is already configured.",
@@ -97,7 +102,9 @@
           "watch_mode": "Watch",
           "watch_notify_target": "Watch notify target",
           "notify_grouping": "Several ports",
-          "tap_url": "Open on tap (optional)"
+          "tap_url": "Open on tap (optional)",
+          "message_style": "Notification text",
+          "extra_notify_targets": "Additional recipients (optional)"
         },
         "data_description": {
           "notify_frequency": "Every day, only on remarkable days (today's coefficient reaches the spring tide threshold, or a spring tide within 2 days), or never. The spring tide alert (2 days before) is sent unless set to never.",
@@ -106,14 +113,17 @@
           "watch_mode": "Off; full notification (same text, no image, sent even without a phone); or short notice, sent only when the phone notification went through.",
           "watch_notify_target": "A notify service or entity of the watch, e.g. notify.mobile_app_galaxy_watch.",
           "notify_grouping": "Own notification for this port, or one notification grouping every port set to « grouped ». The grouped notification follows the settings (time, frequency, phone, watch) of the oldest grouped port; the others only add their tides.",
-          "tap_url": "Dashboard path opened when tapping the notification, e.g. /lovelace/0 or /dashboard-meteo/0. Empty: the app just opens."
+          "tap_url": "Dashboard path opened when tapping the notification, e.g. /lovelace/0 or /dashboard-meteo/0. Empty: the app just opens.",
+          "message_style": "Short: only coefficients and next tide, when the summary image is attached (the image carries the details). Detailed: every tide in the text. A target that cannot receive the image (Telegram, ntfy, e-mail…) always gets the detailed text.",
+          "extra_notify_targets": "Other phones or channels: any notify service or entity (another Companion phone, Telegram, Signal, ntfy, Gotify, e-mail…). Companion phones receive the image; other channels receive the title and detailed text."
         }
       }
     },
     "error": {
       "invalid_target": "Enter a notify service or entity, e.g. notify.mobile_app_my_phone.",
       "watch_target_required": "Choose the watch's notify target, or set the watch to Off.",
-      "invalid_tap_url": "Enter a path starting with /, e.g. /lovelace/0."
+      "invalid_tap_url": "Enter a path starting with /, e.g. /lovelace/0.",
+      "invalid_extra_target": "Each recipient must be a notify service or entity, e.g. notify.telegram."
     }
   },
   "selector": {
@@ -146,6 +156,12 @@
       "options": {
         "own": "Own notification for this port",
         "grouped": "Grouped with the other ports"
+      }
+    },
+    "message_style": {
+      "options": {
+        "short": "Short (details in the image)",
+        "detailed": "Detailed"
       }
     }
   },

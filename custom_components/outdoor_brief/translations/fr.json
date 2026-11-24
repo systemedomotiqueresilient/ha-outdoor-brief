@@ -43,7 +43,9 @@
           "watch_mode": "Montre",
           "watch_notify_target": "Cible notify de la montre",
           "notify_grouping": "Plusieurs ports",
-          "tap_url": "Ouvrir au toucher (facultatif)"
+          "tap_url": "Ouvrir au toucher (facultatif)",
+          "message_style": "Texte de la notification",
+          "extra_notify_targets": "Destinataires supplémentaires (facultatif)"
         },
         "data_description": {
           "notify_frequency": "Chaque jour, seulement les jours remarquables (coefficient du jour au seuil des grandes marées, ou grande marée dans les 2 jours), ou jamais. L'alerte de grande marée (2 jours avant) part sauf avec « Jamais ».",
@@ -52,14 +54,17 @@
           "watch_mode": "Désactivée ; notification complète (même texte, sans image, envoyée même sans téléphone) ; ou court avis, envoyé seulement si la notification du téléphone est bien partie.",
           "watch_notify_target": "Un service ou une entité notify de la montre, par exemple notify.mobile_app_galaxy_watch.",
           "notify_grouping": "Notification propre à ce port, ou une seule notification qui regroupe tous les ports réglés sur « regroupée ». Elle suit les réglages (heure, fréquence, téléphone, montre) du plus ancien port regroupé ; les autres n'y ajoutent que leurs marées.",
-          "tap_url": "Chemin du tableau de bord ouvert en touchant la notification, par exemple /lovelace/0 ou /dashboard-meteo/0. Vide : l'app s'ouvre simplement."
+          "tap_url": "Chemin du tableau de bord ouvert en touchant la notification, par exemple /lovelace/0 ou /dashboard-meteo/0. Vide : l'app s'ouvre simplement.",
+          "message_style": "Court : seulement les coefficients et la prochaine marée, quand l'image du résumé est jointe (elle porte le détail). Détaillé : toutes les marées dans le texte. Une cible qui ne reçoit pas l'image (Telegram, ntfy, e-mail…) reçoit toujours le texte détaillé.",
+          "extra_notify_targets": "D'autres téléphones ou canaux : n'importe quel service ou entité notify (un autre téléphone Companion, Telegram, Signal, ntfy, Gotify, e-mail…). Les téléphones Companion reçoivent l'image ; les autres canaux, le titre et le texte détaillé."
         }
       }
     },
     "error": {
       "invalid_target": "Indiquez un service ou une entité notify, par exemple notify.mobile_app_mon_telephone.",
       "watch_target_required": "Choisissez la cible notify de la montre, ou désactivez la montre.",
-      "invalid_tap_url": "Indiquez un chemin qui commence par /, par exemple /lovelace/0."
+      "invalid_tap_url": "Indiquez un chemin qui commence par /, par exemple /lovelace/0.",
+      "invalid_extra_target": "Chaque destinataire doit être un service ou une entité notify, par exemple notify.telegram."
     },
     "abort": {
       "already_configured": "Ce port est déjà configuré.",
@@ -97,7 +102,9 @@
           "watch_mode": "Montre",
           "watch_notify_target": "Cible notify de la montre",
           "notify_grouping": "Plusieurs ports",
-          "tap_url": "Ouvrir au toucher (facultatif)"
+          "tap_url": "Ouvrir au toucher (facultatif)",
+          "message_style": "Texte de la notification",
+          "extra_notify_targets": "Destinataires supplémentaires (facultatif)"
         },
         "data_description": {
           "notify_frequency": "Chaque jour, seulement les jours remarquables (coefficient du jour au seuil des grandes marées, ou grande marée dans les 2 jours), ou jamais. L'alerte de grande marée (2 jours avant) part sauf avec « Jamais ».",
@@ -106,14 +113,17 @@
           "watch_mode": "Désactivée ; notification complète (même texte, sans image, envoyée même sans téléphone) ; ou court avis, envoyé seulement si la notification du téléphone est bien partie.",
           "watch_notify_target": "Un service ou une entité notify de la montre, par exemple notify.mobile_app_galaxy_watch.",
           "notify_grouping": "Notification propre à ce port, ou une seule notification qui regroupe tous les ports réglés sur « regroupée ». Elle suit les réglages (heure, fréquence, téléphone, montre) du plus ancien port regroupé ; les autres n'y ajoutent que leurs marées.",
-          "tap_url": "Chemin du tableau de bord ouvert en touchant la notification, par exemple /lovelace/0 ou /dashboard-meteo/0. Vide : l'app s'ouvre simplement."
+          "tap_url": "Chemin du tableau de bord ouvert en touchant la notification, par exemple /lovelace/0 ou /dashboard-meteo/0. Vide : l'app s'ouvre simplement.",
+          "message_style": "Court : seulement les coefficients et la prochaine marée, quand l'image du résumé est jointe (elle porte le détail). Détaillé : toutes les marées dans le texte. Une cible qui ne reçoit pas l'image (Telegram, ntfy, e-mail…) reçoit toujours le texte détaillé.",
+          "extra_notify_targets": "D'autres téléphones ou canaux : n'importe quel service ou entité notify (un autre téléphone Companion, Telegram, Signal, ntfy, Gotify, e-mail…). Les téléphones Companion reçoivent l'image ; les autres canaux, le titre et le texte détaillé."
         }
       }
     },
     "error": {
       "invalid_target": "Indiquez un service ou une entité notify, par exemple notify.mobile_app_mon_telephone.",
       "watch_target_required": "Choisissez la cible notify de la montre, ou désactivez la montre.",
-      "invalid_tap_url": "Indiquez un chemin qui commence par /, par exemple /lovelace/0."
+      "invalid_tap_url": "Indiquez un chemin qui commence par /, par exemple /lovelace/0.",
+      "invalid_extra_target": "Chaque destinataire doit être un service ou une entité notify, par exemple notify.telegram."
     }
   },
   "selector": {
@@ -146,6 +156,12 @@
       "options": {
         "own": "Notification propre à ce port",
         "grouped": "Regroupée avec les autres ports"
+      }
+    },
+    "message_style": {
+      "options": {
+        "short": "Court (détail dans l'image)",
+        "detailed": "Détaillé"
       }
     }
   },

@@ -2,6 +2,17 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [0.3.4] - 2026-11-24
+
+Demandée par Mathieu après la première notification regroupée du matin.
+
+### Ajouté
+- **Texte de la notification : court ou détaillé** (court par défaut). Le texte court (« Coef 90-93 · prochaine BM 10:06 », ou « Coef 90-93 · 3 ports, détails dans l'image ») n'est utilisé **que si l'image du résumé est réellement jointe**. Une cible qui ne reçoit pas l'image garde le texte détaillé, pour ne rien perdre.
+- **Destinataires supplémentaires** : n'importe quels services ou entités notify, en plus du téléphone admin (un autre téléphone Companion, Telegram, Signal, ntfy, Gotify, e-mail…). Les téléphones Companion reçoivent l'image, le tag et le lien ; les autres canaux reçoivent seulement le titre et le texte détaillé, sans `data` qu'ils pourraient refuser. Résumé du jour et alerte de grande marée.
+
+### Corrigé
+- **Ligne d'état coupée à droite dans l'image** quand elle est longue (« … · BM 10:0 ») : sa taille de police s'ajuste maintenant à la largeur.
+
 ## [0.3.3] - 2026-11-23
 
 ### Modifié

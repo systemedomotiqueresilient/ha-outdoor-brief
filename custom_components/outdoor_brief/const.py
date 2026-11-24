@@ -4,7 +4,7 @@ from datetime import timedelta
 from typing import Final
 
 DOMAIN: Final = "outdoor_brief"
-VERSION: Final = "0.3.3"  # identique à manifest.json et au fichier VERSION
+VERSION: Final = "0.3.4"  # identique à manifest.json et au fichier VERSION
 
 # Carte Lovelace (servie par l'intégration elle-même)
 FRONTEND_URL: Final = "/outdoor_brief_static"
@@ -70,6 +70,15 @@ CONF_GROUPING: Final = "notify_grouping"
 GROUPING_OWN: Final = "own"
 GROUPING_GROUPED: Final = "grouped"
 GROUPINGS: Final = (GROUPING_OWN, GROUPING_GROUPED)
+
+# Texte de la notification (0.3.4) : court quand l'image est jointe, sinon toujours détaillé
+CONF_MESSAGE_STYLE: Final = "message_style"
+STYLE_SHORT: Final = "short"
+STYLE_DETAILED: Final = "detailed"
+MESSAGE_STYLES: Final = (STYLE_SHORT, STYLE_DETAILED)
+
+# Destinataires supplémentaires (0.3.4) : n'importe quels services ou entités notify
+CONF_EXTRA_TARGETS: Final = "extra_notify_targets"
 
 # Ouverture au toucher (0.3.1) : chemin d'un tableau de bord, ex. /lovelace/0
 CONF_TAP_URL: Final = "tap_url"

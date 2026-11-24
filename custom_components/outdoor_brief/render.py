@@ -126,6 +126,14 @@ def _font(size: int, medium: bool = False) -> ImageFont.FreeTypeFont | ImageFont
         return ImageFont.load_default(size=size)
 
 
+def _fit(draw: ImageDraw.ImageDraw, text: str, size: int) -> Any:
+    """Police aussi grande que possible (jusqu'à `size`) pour tenir dans la largeur utile."""
+    width = WIDTH - 2 * MARGIN
+    while size > 24 and draw.textlength(text, font=_font(size, medium=True)) > width:
+        size -= 1
+    return _font(size, medium=True)
+
+
 def texts(language: str | None) -> dict[str, Any]:
     return TEXT["fr" if str(language or "").lower().startswith("fr") else "en"]
 
@@ -263,7 +271,7 @@ def render_summaries(
             )
             y += 56
         if status := status_line(summary, lang):
-            draw.text((MARGIN, y), status, font=_font(36, medium=True), fill=colors["accent"])
+            draw.text((MARGIN, y), status, font=_fit(draw, status, 36), fill=colors["accent"])
         y += 70
         draw.text((col_x[1], y), lang["morning"], font=f_small, fill=colors["muted"])
         draw.text((col_x[2], y), lang["afternoon"], font=f_small, fill=colors["muted"])

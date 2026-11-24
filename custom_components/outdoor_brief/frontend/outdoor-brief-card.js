@@ -2,7 +2,7 @@
 // JavaScript sans dépendance. Aucune valeur venant d'une entité n'est insérée en HTML :
 // le gabarit est fixe et les données passent par textContent.
 
-const CARD_VERSION = "0.3.3";
+const CARD_VERSION = "0.3.4";
 
 const TEXT = {
   fr: {
