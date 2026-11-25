@@ -3,6 +3,7 @@
 Validée par Mathieu le 2026-11-21 (cahier des charges « Outdoor Brief — Cahier des charges »).
 
 ## Fait
+- **0.3.5** : tableau de bord dédié `/outdoor-brief` (rapport en temps réel, cible par défaut du toucher), carte `outdoor-brief-report-card`.
 - **0.3.4** : texte court quand l'image est jointe, destinataires supplémentaires sur tout canal notify, ligne d'état ajustée à la largeur de l'image.
 - **0.3.3** : module commun admin_phone 1.2.0 (Outdoor Brief reconnu comme intégration sœur).
 - **0.3.2** : l'action de test n'envoie plus en double les ports regroupés.

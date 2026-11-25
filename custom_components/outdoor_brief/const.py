@@ -4,11 +4,16 @@ from datetime import timedelta
 from typing import Final
 
 DOMAIN: Final = "outdoor_brief"
-VERSION: Final = "0.3.4"  # identique à manifest.json et au fichier VERSION
+VERSION: Final = "0.3.5"  # identique à manifest.json et au fichier VERSION
 
 # Carte Lovelace (servie par l'intégration elle-même)
 FRONTEND_URL: Final = "/outdoor_brief_static"
 CARD_FILE: Final = "outdoor-brief-card.js"
+
+# Tableau de bord dédié (0.3.5) : panneau, cible par défaut du toucher sur la notification
+PANEL_URL_PATH: Final = "outdoor-brief"
+PANEL_ELEMENT: Final = "outdoor-brief-panel"
+PANEL_ICON: Final = "mdi:waves"
 
 # Contrat public : à monter à chaque changement incompatible des attributs exposés
 SCHEMA_VERSION: Final = 1

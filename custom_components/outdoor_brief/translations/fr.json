@@ -54,7 +54,7 @@
           "watch_mode": "Désactivée ; notification complète (même texte, sans image, envoyée même sans téléphone) ; ou court avis, envoyé seulement si la notification du téléphone est bien partie.",
           "watch_notify_target": "Un service ou une entité notify de la montre, par exemple notify.mobile_app_galaxy_watch.",
           "notify_grouping": "Notification propre à ce port, ou une seule notification qui regroupe tous les ports réglés sur « regroupée ». Elle suit les réglages (heure, fréquence, téléphone, montre) du plus ancien port regroupé ; les autres n'y ajoutent que leurs marées.",
-          "tap_url": "Chemin du tableau de bord ouvert en touchant la notification, par exemple /lovelace/0 ou /dashboard-meteo/0. Vide : l'app s'ouvre simplement.",
+          "tap_url": "Chemin du tableau de bord ouvert en touchant la notification. Vide : le tableau de bord Outdoor Brief (/outdoor-brief), qui montre le même rapport en temps réel.",
           "message_style": "Court : seulement les coefficients et la prochaine marée, quand l'image du résumé est jointe (elle porte le détail). Détaillé : toutes les marées dans le texte. Une cible qui ne reçoit pas l'image (Telegram, ntfy, e-mail…) reçoit toujours le texte détaillé.",
           "extra_notify_targets": "D'autres téléphones ou canaux : n'importe quel service ou entité notify (un autre téléphone Companion, Telegram, Signal, ntfy, Gotify, e-mail…). Les téléphones Companion reçoivent l'image ; les autres canaux, le titre et le texte détaillé."
         }
@@ -113,7 +113,7 @@
           "watch_mode": "Désactivée ; notification complète (même texte, sans image, envoyée même sans téléphone) ; ou court avis, envoyé seulement si la notification du téléphone est bien partie.",
           "watch_notify_target": "Un service ou une entité notify de la montre, par exemple notify.mobile_app_galaxy_watch.",
           "notify_grouping": "Notification propre à ce port, ou une seule notification qui regroupe tous les ports réglés sur « regroupée ». Elle suit les réglages (heure, fréquence, téléphone, montre) du plus ancien port regroupé ; les autres n'y ajoutent que leurs marées.",
-          "tap_url": "Chemin du tableau de bord ouvert en touchant la notification, par exemple /lovelace/0 ou /dashboard-meteo/0. Vide : l'app s'ouvre simplement.",
+          "tap_url": "Chemin du tableau de bord ouvert en touchant la notification. Vide : le tableau de bord Outdoor Brief (/outdoor-brief), qui montre le même rapport en temps réel.",
           "message_style": "Court : seulement les coefficients et la prochaine marée, quand l'image du résumé est jointe (elle porte le détail). Détaillé : toutes les marées dans le texte. Une cible qui ne reçoit pas l'image (Telegram, ntfy, e-mail…) reçoit toujours le texte détaillé.",
           "extra_notify_targets": "D'autres téléphones ou canaux : n'importe quel service ou entité notify (un autre téléphone Companion, Telegram, Signal, ntfy, Gotify, e-mail…). Les téléphones Companion reçoivent l'image ; les autres canaux, le titre et le texte détaillé."
         }

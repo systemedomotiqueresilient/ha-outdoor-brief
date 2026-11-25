@@ -6,6 +6,7 @@ from datetime import datetime
 import logging
 from pathlib import Path
 
+from homeassistant.components import panel_custom
 from homeassistant.components.frontend import add_extra_js_url
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
@@ -29,6 +30,9 @@ from .const import (
     CARD_FILE,
     DOMAIN,
     FRONTEND_URL,
+    PANEL_ELEMENT,
+    PANEL_ICON,
+    PANEL_URL_PATH,
     RECOMPUTE_INTERVAL,
     SERVICE_SEND_SUMMARY,
     VERSION,
@@ -86,7 +90,20 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         [StaticPathConfig(FRONTEND_URL, str(Path(__file__).parent / "frontend"), False)]
     )
     # ?v= change à chaque version : le navigateur recharge la carte après une mise à jour.
-    add_extra_js_url(hass, f"{FRONTEND_URL}/{CARD_FILE}?v={VERSION}")
+    module = f"{FRONTEND_URL}/{CARD_FILE}?v={VERSION}"
+    add_extra_js_url(hass, module)
+    # Tableau de bord dédié : le rapport du jour en temps réel, cible du toucher sur la
+    # notification. Ouvert à tous les utilisateurs (lecture seule).
+    await panel_custom.async_register_panel(
+        hass,
+        frontend_url_path=PANEL_URL_PATH,
+        webcomponent_name=PANEL_ELEMENT,
+        sidebar_title="Outdoor Brief",
+        sidebar_icon=PANEL_ICON,
+        module_url=module,
+        require_admin=False,
+        config={"version": VERSION},
+    )
     return True
 
 

@@ -3,7 +3,8 @@
   "name": "Outdoor Brief",
   "after_dependencies": [
     "frontend",
-    "marees_france"
+    "marees_france",
+    "panel_custom"
   ],
   "categories": [
     "weather_alerts.forecasts"
@@ -20,5 +21,5 @@
   "iot_class": "calculated",
   "issue_tracker": "https://github.com/systemedomotiqueresilient/ha-outdoor-brief/issues",
   "requirements": [],
-  "version": "0.3.4"
+  "version": "0.3.5"
 }

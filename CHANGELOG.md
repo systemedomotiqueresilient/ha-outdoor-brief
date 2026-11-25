@@ -2,6 +2,18 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [0.3.5] - 2026-11-25
+
+### Ajouté
+- **Tableau de bord dédié `/outdoor-brief`** (panneau « Outdoor Brief » de la barre latérale, ouvert à tous les utilisateurs, pensé pour le téléphone) : la reproduction **en temps réel** du rapport de la notification. Mêmes ports, même ordre, même contenu : ligne d'état, tableau matin / après-midi, prochaine grande marée, plus fort coefficient du mois. Avec `?entry=<id>`, un seul port.
+- **Cible prédéfinie du toucher** : si « Ouvrir au toucher » est vide, la notification ouvre ce tableau de bord : le rapport regroupé, ou le port seul pour une notification propre à un port.
+- **Carte `custom:outdoor-brief-report-card`** : le même rapport, à placer dans n'importe quel tableau de bord (option `entry` pour un seul port).
+- **Résumé du jour** : attribut `report` (`entry_id`, `rank`, `grouped`), pour reproduire l'ordre et le regroupement de la notification. Ajout seulement, `schema_version` reste à 1.
+- **Rechargement automatique** du tableau de bord après une mise à jour (une fois, puis un bandeau « Recharger »), comme le panneau de Package Keeper.
+
+### Modifié
+- Le manifest se charge aussi après `panel_custom`.
+
 ## [0.3.4] - 2026-11-24
 
 Demandée par Mathieu après la première notification regroupée du matin.

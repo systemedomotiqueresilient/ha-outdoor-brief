@@ -46,6 +46,7 @@ from .const import (
     FREQ_NEVER,
     FREQ_REMARKABLE,
     GROUPING_GROUPED,
+    PANEL_URL_PATH,
     SPRING_TIDE_NOTICE_DAYS,
     STYLE_SHORT,
     WATCH_FULL,
@@ -161,6 +162,17 @@ def is_rich(hass: HomeAssistant, target: str | None) -> bool:
         and target.startswith("notify.mobile_app_")
         and hass.services.has_service("notify", target.removeprefix("notify."))
     )
+
+
+def report_info(hass: HomeAssistant, entry: ConfigEntry) -> dict[str, Any]:
+    """Place du port dans le rapport : lu par le tableau de bord pour reproduire la notification."""
+    entries = hass.config_entries.async_loaded_entries(DOMAIN)
+    rank = next((i for i, e in enumerate(entries) if e.entry_id == entry.entry_id), len(entries))
+    return {
+        "entry_id": entry.entry_id,
+        "rank": rank,
+        "grouped": entry.options.get(CONF_GROUPING) == GROUPING_GROUPED,
+    }
 
 
 def group_message(summaries: list[dict[str, Any]], language: str | None) -> str:
@@ -335,9 +347,16 @@ class Notifier:
         return found
 
     def _tap_data(self) -> dict[str, Any]:
-        """Lien ouvert au toucher : « url » pour iOS, « clickAction » pour Android."""
+        """Lien ouvert au toucher : « url » pour iOS, « clickAction » pour Android.
+
+        Sans réglage, le tableau de bord Outdoor Brief : le rapport regroupé, ou ce port seul.
+        """
         url = str(self.entry.options.get(CONF_TAP_URL) or "").strip()
-        return {"url": url, "clickAction": url} if url else {}
+        if not url:
+            url = f"/{PANEL_URL_PATH}"
+            if not self.group():
+                url += f"?entry={self.entry.entry_id}"
+        return {"url": url, "clickAction": url}
 
     @property
     def extra_targets(self) -> list[str]:

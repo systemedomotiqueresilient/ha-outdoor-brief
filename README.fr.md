@@ -4,7 +4,7 @@
 
 Le **résumé du jour pour ce qui se passe dehors**, dans Home Assistant. La version 0.2 couvre le littoral : les marées du jour, le marnage, le douzième de marée en cours et la prochaine grande marée, rassemblés dans un capteur de résumé affichés par une carte Lovelace et envoyés chaque matin sur votre téléphone, avec l'image du résumé, et si vous le souhaitez sur une montre connectée.
 
-> **Statut : 0.3.4, début de développement.** La météo marine (0.4) et le profil potager (0.5) sont dans la [feuille de route](ROADMAP.md).
+> **Statut : 0.3.5, début de développement.** La météo marine (0.4) et le profil potager (0.5) sont dans la [feuille de route](ROADMAP.md).
 
 ## D'où viennent les données
 
@@ -41,6 +41,10 @@ compact: false
 
 Elle affiche le sens de la marée et le douzième en cours, un tableau matin / après-midi des pleines et basses mers avec leurs coefficients, la prochaine grande marée et le plus fort coefficient du mois. `compact: true` ne garde que le tableau et la prochaine grande marée. Après une mise à jour, rechargez la page une fois si la carte affiche encore l'ancienne version.
 
+## Tableau de bord dédié
+
+Le panneau **Outdoor Brief** (`/outdoor-brief`, barre latérale) affiche en temps réel le rapport de la notification : mêmes ports, même ordre, même contenu. C'est lui que la notification ouvre au toucher, sauf si vous indiquez un autre chemin. La carte `custom:outdoor-brief-report-card` montre le même rapport dans vos propres tableaux de bord.
+
 ## Notifications
 
 À régler dans l'écran *Notifications* (aussi dans les options) :
@@ -52,7 +56,7 @@ Elle affiche le sens de la marée et le douzième en cours, un tableau matin / a
 - **Plusieurs ports** : notification propre à chaque port, ou une seule notification regroupée (une ligne par port, tableaux empilés dans l'image), envoyée selon les réglages du plus ancien port regroupé.
 - **Texte court ou détaillé** : court par défaut quand l'image est jointe (elle porte le détail) ; une cible sans image reçoit toujours le texte détaillé.
 - **Destinataires supplémentaires** : d'autres téléphones ou canaux (Telegram, Signal, ntfy, Gotify, e-mail…). Les téléphones Companion reçoivent l'image ; les autres canaux, le titre et le texte détaillé.
-- **Ouvrir au toucher** : chemin d'un tableau de bord, par exemple `/lovelace/0`.
+- **Ouvrir au toucher** : chemin d'un tableau de bord ; vide, le tableau de bord Outdoor Brief.
 - **Téléphone admin en entité notify** (`notify.iphone_…`) : Outdoor Brief envoie au service `notify.mobile_app_…` du même appareil, seul capable de joindre l'image.
 - **Test** : l'action `outdoor_brief.send_summary` envoie le résumé tout de suite.
 

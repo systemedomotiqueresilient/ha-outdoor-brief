@@ -187,6 +187,7 @@ async def test_sensors(hass: HomeAssistant, entry) -> None:
     assert attrs["schema_version"] == SCHEMA_VERSION
     assert attrs["port"] == "Port-Louis (Locmalo)"
     assert attrs["tide_twelfth"] == 6
+    assert attrs["report"] == {"entry_id": entry.entry_id, "rank": 0, "grouped": False}
     assert attrs["coefficients"] == [57, 64]
     assert [(t["type"], t["time"][11:16], t["height"]) for t in attrs["tides"]] == [
         ("high", "01:42", 4.37),
@@ -313,12 +314,21 @@ def test_module_copy_and_versions() -> None:
 async def test_card_registered(hass: HomeAssistant) -> None:
     hass.config.components.add("frontend")
     hass.http = MagicMock(async_register_static_paths=AsyncMock())
-    with patch.object(ob, "add_extra_js_url") as extra:
+    with (
+        patch.object(ob, "add_extra_js_url") as extra,
+        patch.object(ob.panel_custom, "async_register_panel", AsyncMock()) as panel,
+    ):
         assert await ob.async_setup(hass, {})
     config = hass.http.async_register_static_paths.call_args.args[0][0]
     assert config.url_path == FRONTEND_URL
     assert (Path(config.path) / CARD_FILE).is_file()
     extra.assert_called_once_with(hass, f"{FRONTEND_URL}/{CARD_FILE}?v={VERSION}")
+    # 0.3.5 : tableau de bord dédié, ouvert à tous, avec la version pour le rechargement
+    kwargs = panel.call_args.kwargs
+    assert kwargs["frontend_url_path"] == "outdoor-brief"
+    assert kwargs["webcomponent_name"] == "outdoor-brief-panel"
+    assert kwargs["require_admin"] is False
+    assert kwargs["config"] == {"version": VERSION}
 
 
 async def test_card_skipped_without_frontend(hass: HomeAssistant) -> None:
@@ -332,6 +342,8 @@ def test_card_never_injects_data_as_html() -> None:
     text = js.read_text(encoding="utf-8")
     # innerHTML ne reçoit que le gabarit fixe ; les données passent par textContent
     assert re.findall(r"innerHTML\s*=\s*([A-Z_]+)", text) == ["TEMPLATE"]
+    for element in ("outdoor-brief-report-card", "outdoor-brief-panel"):
+        assert f'customElements.define("{element}"' in text
     assert 'customElements.define("outdoor-brief-card"' in text
     # L'éditeur ne propose que les résumés du jour (0.2.2)
     assert "include_entities: summaryEntities(this._hass)" in text

@@ -4,7 +4,7 @@
 
 The **daily brief for what happens outdoors**, in Home Assistant. Version 0.2 covers the coast: today's tides, tidal range, the current tide twelfth and the next spring tide, gathered in a single summary sensor shown by a Lovelace card and sent each morning to your phone, with the summary image, and optionally to a smartwatch.
 
-> **Status: 0.3.4, early development.** Marine weather (0.4) and the garden profile (0.5) are on the [roadmap](ROADMAP.md).
+> **Status: 0.3.5, early development.** Marine weather (0.4) and the garden profile (0.5) are on the [roadmap](ROADMAP.md).
 
 ## Where the data comes from
 
@@ -41,6 +41,10 @@ compact: false
 
 It shows the tide trend and twelfth, a morning/afternoon table of high and low tides with coefficients, the next spring tide and the month's highest coefficient. `compact: true` keeps only the table and the next spring tide. After an update, reload the page once if the card still shows the previous version.
 
+## Dedicated dashboard
+
+The **Outdoor Brief** panel (`/outdoor-brief`, sidebar) shows the notification report live: same ports, same order, same content. Tapping the notification opens it, unless you set another path. The `custom:outdoor-brief-report-card` card shows the same report in your own dashboards.
+
 ## Notifications
 
 Set in the *Notifications* screen (also in the options):
@@ -52,7 +56,7 @@ Set in the *Notifications* screen (also in the options):
 - **Several ports**: one notification per port, or a single grouped notification (one line per port, stacked tables in the image), sent with the settings of the oldest grouped port.
 - **Short or detailed text**: short by default when the image is attached (it carries the details); a target without the image always gets the detailed text.
 - **Additional recipients**: other phones or channels (Telegram, Signal, ntfy, Gotify, e-mail…). Companion phones get the image; other channels get the title and detailed text.
-- **Open on tap**: a dashboard path, e.g. `/lovelace/0`.
+- **Open on tap**: a dashboard path; empty, the Outdoor Brief dashboard.
 - **Admin phone set as a notify entity** (`notify.iphone_…`): Outdoor Brief sends to the device's `notify.mobile_app_…` service, the only one that carries the image.
 - **Test**: action `outdoor_brief.send_summary` sends the brief right away.
 

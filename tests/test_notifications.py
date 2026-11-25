@@ -84,6 +84,9 @@ async def test_daily_summary_phone_with_image(hass, marees, freezer, sent) -> No
         "image", DOMAIN, f"{entry.entry_id}_summary_image"
     )
     assert call["data"]["image"] == f"/api/image_proxy/{image_id}"
+    # 0.3.5 : sans réglage, le toucher ouvre le tableau de bord, sur ce seul port
+    assert call["data"]["url"] == f"/outdoor-brief?entry={entry.entry_id}"
+    assert call["data"]["clickAction"] == call["data"]["url"]
     assert sent["watch"] == []
     assert events and events[0].data["coefficients"] == [57, 64]
 
@@ -261,6 +264,7 @@ async def test_grouped_ports_send_one_notification(hass, marees, freezer, sent, 
     assert titles.count("🌊 Lorient") == 1  # le port « propre » garde le sien
     assert titles.count("🌕 Spring tide in 2 days") == 2  # groupe + Lorient
     grouped = next(c for c in sent["phone"] if c["title"] == "🌊 Today's tides")
+    assert grouped["data"]["url"] == "/outdoor-brief"  # le rapport regroupé
     assert grouped["message"] == "Coef 81-86 · 2 ports, details in the image"
     spring = next(
         c for c in sent["phone"]

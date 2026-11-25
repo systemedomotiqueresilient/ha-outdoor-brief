@@ -2,7 +2,7 @@
 // JavaScript sans dépendance. Aucune valeur venant d'une entité n'est insérée en HTML :
 // le gabarit est fixe et les données passent par textContent.
 
-const CARD_VERSION = "0.3.4";
+const CARD_VERSION = "0.3.5";
 
 const TEXT = {
   fr: {
@@ -32,6 +32,12 @@ const TEXT = {
     editorCompact: "Mode compact (sans ligne d'état ni plus fort coefficient du mois)",
     pickerName: "Outdoor Brief",
     pickerDesc: "Le résumé du jour : marées, coefficients et prochaine grande marée.",
+    reportName: "Outdoor Brief — rapport du jour",
+    reportDesc: "Le rapport de la notification, en temps réel : tous les ports regroupés.",
+    noReport: "Aucun résumé Outdoor Brief n'est disponible pour l'instant.",
+    updated: (t) => `Mis à jour à ${t}`,
+    outdated: "Outdoor Brief a été mis à jour : rechargez la page.",
+    reload: "Recharger",
   },
   en: {
     title: "Outdoor Brief",
@@ -60,6 +66,12 @@ const TEXT = {
     editorCompact: "Compact mode (no status line, no monthly highest coefficient)",
     pickerName: "Outdoor Brief",
     pickerDesc: "The daily brief: tides, coefficients and next spring tide.",
+    reportName: "Outdoor Brief — daily report",
+    reportDesc: "The notification report, live: every grouped port.",
+    noReport: "No Outdoor Brief summary is available yet.",
+    updated: (t) => `Updated at ${t}`,
+    outdated: "Outdoor Brief was updated: reload the page.",
+    reload: "Reload",
   },
 };
 
@@ -288,8 +300,264 @@ class OutdoorBriefCardEditor extends HTMLElement {
   }
 }
 
+// --- Rapport du jour (0.3.5) : la reproduction en temps réel de la notification ------------
+// Mêmes ports, même ordre et même contenu que l'image envoyée sur le téléphone :
+// les ports « regroupés » s'il y en a au moins deux, sinon tous les ports (ou un seul,
+// si l'adresse contient ?entry=<id>, comme le lien d'une notification propre à un port).
+
+const REPORT_STYLE = `
+  :host { display: block; }
+  .report { font-variant-numeric: tabular-nums; }
+  .r-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .r-title { font-size: 1.5em; font-weight: 500; }
+  .r-sun { width: 18px; height: 18px; border-radius: 50%; background: #EF9F27; flex: none; }
+  .r-date { color: var(--secondary-text-color); margin: 2px 0 8px; }
+  .r-port { font-size: 1.1em; font-weight: 500; margin: 18px 0 4px; }
+  .r-status { color: var(--primary-color); font-weight: 500; margin-bottom: 6px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 8px 4px; text-align: left; border-bottom: 1px solid var(--divider-color); white-space: nowrap; }
+  th { color: var(--secondary-text-color); font-weight: 400; font-size: .85em; }
+  td.label { color: var(--secondary-text-color); }
+  td.value { font-weight: 500; }
+  tr:last-child td { border-bottom: none; }
+  .r-foot { margin-top: 16px; display: grid; gap: 4px; }
+  .r-source, .r-updated { margin-top: 10px; font-size: .8em; color: var(--secondary-text-color); }
+  .r-empty { color: var(--secondary-text-color); }
+`;
+
+const el = (tag, attrs = {}, ...children) => {
+  const node = document.createElement(tag);
+  for (const [key, value] of Object.entries(attrs)) {
+    if (key === "text") node.textContent = value;
+    else if (key === "class") node.className = value;
+    else node.setAttribute(key, value);
+  }
+  for (const child of children) if (child) node.append(child);
+  return node;
+};
+
+// Résumés à afficher, dans l'ordre de la notification
+const reportSummaries = (hass, onlyEntry) => {
+  const all = summaryEntities(hass)
+    .map((id) => hass.states[id].attributes)
+    .filter((a) => a && a.report)
+    .sort((a, b) => a.report.rank - b.report.rank);
+  if (onlyEntry) return all.filter((a) => a.report.entry_id === onlyEntry);
+  const grouped = all.filter((a) => a.report.grouped);
+  return grouped.length >= 2 ? grouped : all;
+};
+
+const fmtTime = (hass, iso) =>
+  new Date(iso).toLocaleTimeString(lang(hass), { hour: "2-digit", minute: "2-digit", timeZone: hass?.config?.time_zone });
+const fmtNum = (hass, v, d = 2) =>
+  v === null || v === undefined ? "—" : Number(v).toLocaleString(lang(hass), { minimumFractionDigits: d, maximumFractionDigits: d });
+const fmtDay = (hass, iso, opts) => new Date(`${iso}T12:00:00`).toLocaleDateString(lang(hass), opts);
+const hourOf = (hass, iso) =>
+  Number(new Date(iso).toLocaleString("en-GB", { hour: "2-digit", hour12: false, timeZone: hass?.config?.time_zone }));
+
+const statusText = (hass, a) => {
+  const tx = t(hass);
+  if (!a.next_tide) return "";
+  const rising = a.next_tide.type === "high";
+  const parts = [rising ? tx.rising : tx.falling];
+  if (a.tide_twelfth) parts.push(tx.twelfth(a.tide_twelfth));
+  if (a.tidal_range !== null && a.tidal_range !== undefined) parts.push(`${tx.range} ${fmtNum(hass, a.tidal_range)} m`);
+  parts.push(`${rising ? tx.nextHigh : tx.nextLow} ${fmtTime(hass, a.next_tide.time)}`);
+  return parts.join(" · ");
+};
+
+const portTable = (hass, a) => {
+  const tx = t(hass);
+  const half = { high: [null, null], low: [null, null] };
+  for (const tide of a.tides || []) {
+    if (!half[tide.type]) continue;
+    const col = hourOf(hass, tide.time) < 12 ? 0 : 1;
+    if (!half[tide.type][col]) half[tide.type][col] = tide;
+  }
+  const cell = (tide) => (tide ? `${fmtTime(hass, tide.time)} · ${fmtNum(hass, tide.height)} m` : "—");
+  const row = (label, values) =>
+    el("tr", {}, el("td", { class: "label", text: label }), ...values.map((v) => el("td", { class: "value", text: v })));
+  return el(
+    "table",
+    {},
+    el("thead", {}, el("tr", {}, el("th"), el("th", { text: tx.morning }), el("th", { text: tx.afternoon }))),
+    el(
+      "tbody",
+      {},
+      row(tx.high, half.high.map(cell)),
+      row(tx.low, half.low.map(cell)),
+      row(tx.coefficient, half.high.map((tide) => String(tide?.coefficient ?? "—"))),
+    ),
+  );
+};
+
+// Construit tout le rapport ; aucune donnée n'est insérée en HTML (textContent seulement).
+const buildReport = (hass, summaries) => {
+  const tx = t(hass);
+  const root = el("div", { class: "report" });
+  root.append(el("div", { class: "r-head" }, el("span", { class: "r-title", text: tx.title }), el("span", { class: "r-sun" })));
+  if (!summaries.length) {
+    root.append(el("p", { class: "r-empty", text: tx.noReport }));
+    return root;
+  }
+  const first = summaries[0];
+  const multi = summaries.length > 1;
+  const day = fmtDay(hass, first.date, { weekday: "long", day: "numeric", month: "long" });
+  root.append(el("div", { class: "r-date", text: multi ? day : `${first.port} · ${day}` }));
+  for (const a of summaries) {
+    if (multi) root.append(el("div", { class: "r-port", text: a.port }));
+    const status = statusText(hass, a);
+    if (status) root.append(el("div", { class: "r-status", text: status }));
+    root.append(portTable(hass, a));
+  }
+  const foot = el("div", { class: "r-foot" });
+  const spring = first.next_spring_tide;
+  foot.append(
+    el(
+      "div",
+      { text: spring
+        ? `${tx.spring} : ${fmtDay(hass, spring.date, { weekday: "short", day: "numeric", month: "short" })}, coef ${spring.coefficient} (${tx.inDays(Math.round((new Date(`${spring.date}T12:00:00`) - new Date(`${first.date}T12:00:00`)) / 86400000))})`
+        : tx.springNone(first.spring_tide_threshold ?? 100) },
+    ),
+  );
+  if (first.month_max) {
+    foot.append(el("div", { text: `${tx.monthMax} : ${tx.monthMaxOn(first.month_max.coefficient, fmtDay(hass, first.month_max.date, { day: "numeric", month: "short" }))}` }));
+  }
+  root.append(foot, el("div", { class: "r-source", text: tx.source }));
+  return root;
+};
+
+// Signature du contenu : on ne reconstruit le DOM que si le rapport a changé.
+const signature = (hass, summaries) => JSON.stringify([lang(hass), summaries]);
+
+class OutdoorBriefReportCard extends HTMLElement {
+  static getStubConfig() {
+    return {};
+  }
+
+  setConfig(config) {
+    this._config = { ...(config || {}) };
+    this._sig = null;
+    this._render();
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    this._render();
+  }
+
+  getCardSize() {
+    return 10;
+  }
+
+  getGridOptions() {
+    return { columns: 12, min_columns: 6 };
+  }
+
+  _render() {
+    if (!this._hass || !this._config) return;
+    if (!this._root) {
+      this._root = this.attachShadow({ mode: "open" });
+      const style = el("style", { text: REPORT_STYLE });
+      this._card = el("ha-card");
+      this._card.style.padding = "16px";
+      this._root.append(style, this._card);
+    }
+    const summaries = reportSummaries(this._hass, this._config.entry);
+    const sig = signature(this._hass, summaries);
+    if (sig === this._sig) return;
+    this._sig = sig;
+    this._card.replaceChildren(buildReport(this._hass, summaries));
+  }
+}
+
+// Panneau /outdoor-brief : tableau de bord dédié, pensé pour le téléphone.
+class OutdoorBriefPanel extends HTMLElement {
+  set hass(hass) {
+    this._hass = hass;
+    this._render();
+  }
+
+  set narrow(value) {
+    this._narrow = value;
+    if (this._menu) this._menu.narrow = value;
+  }
+
+  set panel(value) {
+    this._panel = value;
+    this._checkVersion(value?.config?.version);
+  }
+
+  connectedCallback() {
+    this._render();
+  }
+
+  // Après une mise à jour, le navigateur garde l'ancien module tant que la page n'est pas
+  // rechargée : on recharge une fois tout seul, sinon un bandeau le propose.
+  _checkVersion(serverVersion) {
+    this._outdated = Boolean(serverVersion && serverVersion !== CARD_VERSION);
+    if (!this._outdated) return;
+    const key = `outdoor-brief-reloaded-${serverVersion}`;
+    let tried = true;
+    try {
+      tried = sessionStorage.getItem(key) === "1";
+      if (!tried) sessionStorage.setItem(key, "1");
+    } catch (_err) {
+      tried = true;
+    }
+    if (!tried) window.location.reload();
+  }
+
+  _render() {
+    if (!this._hass) return;
+    const tx = t(this._hass);
+    if (!this._root) {
+      this._root = this.attachShadow({ mode: "open" });
+      const style = el("style", {
+        text: `${REPORT_STYLE}
+          :host { background: var(--primary-background-color); min-height: 100vh; color: var(--primary-text-color); }
+          .bar { display: flex; align-items: center; gap: 4px; height: 56px; padding: 0 8px;
+                 background: var(--app-header-background-color, var(--primary-color));
+                 color: var(--app-header-text-color, white); font-size: 20px; }
+          .page { max-width: 720px; margin: 0 auto; padding: 16px; }
+          ha-card { padding: 16px; }
+          .banner { background: var(--warning-color, #c77700); color: white; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; }
+          .banner button { background: transparent; color: white; border: 1px solid white; border-radius: 6px; padding: 4px 10px; }
+          [hidden] { display: none !important; }`,
+      });
+      this._menu = document.createElement("ha-menu-button");
+      this._menu.narrow = this._narrow;
+      this._banner = el("div", { class: "banner" });
+      this._card = el("ha-card");
+      this._updated = el("div", { class: "r-updated" });
+      this._root.append(
+        style,
+        el("div", { class: "bar" }, this._menu, el("span", { text: "Outdoor Brief" })),
+        this._banner,
+        el("div", { class: "page" }, this._card, this._updated),
+      );
+    }
+    this._menu.hass = this._hass;
+    this._banner.hidden = !this._outdated;
+    if (this._outdated && !this._banner.childNodes.length) {
+      const button = el("button", { text: tx.reload });
+      button.addEventListener("click", () => window.location.reload());
+      this._banner.append(el("span", { text: tx.outdated }), button);
+    }
+    const entry = new URLSearchParams(window.location.search).get("entry");
+    const summaries = reportSummaries(this._hass, entry);
+    const sig = signature(this._hass, summaries);
+    if (sig === this._sig) return;
+    this._sig = sig;
+    this._card.replaceChildren(buildReport(this._hass, summaries));
+    this._updated.textContent = tx.updated(new Date().toLocaleTimeString(lang(this._hass), { hour: "2-digit", minute: "2-digit" }));
+  }
+}
+
 if (!customElements.get("outdoor-brief-card")) customElements.define("outdoor-brief-card", OutdoorBriefCard);
 if (!customElements.get("outdoor-brief-card-editor")) customElements.define("outdoor-brief-card-editor", OutdoorBriefCardEditor);
+if (!customElements.get("outdoor-brief-report-card")) customElements.define("outdoor-brief-report-card", OutdoorBriefReportCard);
+if (!customElements.get("outdoor-brief-panel")) customElements.define("outdoor-brief-panel", OutdoorBriefPanel);
 
 window.customCards = window.customCards || [];
 if (!window.customCards.some((c) => c.type === "outdoor-brief-card")) {
@@ -298,6 +566,16 @@ if (!window.customCards.some((c) => c.type === "outdoor-brief-card")) {
     type: "outdoor-brief-card",
     name: tx.pickerName,
     description: tx.pickerDesc,
+    preview: true,
+    documentationURL: "https://github.com/systemedomotiqueresilient/ha-outdoor-brief",
+  });
+}
+if (!window.customCards.some((c) => c.type === "outdoor-brief-report-card")) {
+  const tx = TEXT[String(navigator.language || "en").startsWith("fr") ? "fr" : "en"];
+  window.customCards.push({
+    type: "outdoor-brief-report-card",
+    name: tx.reportName,
+    description: tx.reportDesc,
     preview: true,
     documentationURL: "https://github.com/systemedomotiqueresilient/ha-outdoor-brief",
   });

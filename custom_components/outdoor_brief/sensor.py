@@ -27,6 +27,7 @@ from .admin_phone import (
     CONF_ADMIN_NOTIFY_TARGET,
     normalize_target,
 )
+from .alerts import report_info
 from .const import (
     CONF_SPRING_THRESHOLD,
     DEFAULT_SPRING_THRESHOLD,
@@ -127,7 +128,7 @@ SENSORS: tuple[BriefSensorDescription, ...] = (
         key="next_spring_tide",
         translation_key="next_spring_tide",
         device_class=SensorDeviceClass.DATE,
-        value_fn=lambda ctx: (upcoming[0][0] if (upcoming := _spring(ctx)) else None),
+        value_fn=lambda ctx: upcoming[0][0] if (upcoming := _spring(ctx)) else None,
         attrs_fn=_next_spring_attrs,
     ),
 )
@@ -178,9 +179,7 @@ class BriefSensor(CoordinatorEntity[OutdoorBriefCoordinator], SensorEntity):
             data=self.coordinator.data,
             now=now,
             today=now.date(),
-            threshold=int(
-                self._entry.options.get(CONF_SPRING_THRESHOLD, DEFAULT_SPRING_THRESHOLD)
-            ),
+            threshold=int(self._entry.options.get(CONF_SPRING_THRESHOLD, DEFAULT_SPRING_THRESHOLD)),
             port=self._entry.title,
         )
 
@@ -190,7 +189,10 @@ class BriefSensor(CoordinatorEntity[OutdoorBriefCoordinator], SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        return self.entity_description.attrs_fn(self._snapshot())
+        attrs = self.entity_description.attrs_fn(self._snapshot())
+        if self.entity_description.key == "daily_summary":
+            attrs["report"] = report_info(self.hass, self._entry)  # 0.3.5 : ajout
+        return attrs
 
 
 class AdminPhoneSensor(SensorEntity):

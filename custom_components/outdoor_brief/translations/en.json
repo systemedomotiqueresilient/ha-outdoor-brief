@@ -54,7 +54,7 @@
           "watch_mode": "Off; full notification (same text, no image, sent even without a phone); or short notice, sent only when the phone notification went through.",
           "watch_notify_target": "A notify service or entity of the watch, e.g. notify.mobile_app_galaxy_watch.",
           "notify_grouping": "Own notification for this port, or one notification grouping every port set to « grouped ». The grouped notification follows the settings (time, frequency, phone, watch) of the oldest grouped port; the others only add their tides.",
-          "tap_url": "Dashboard path opened when tapping the notification, e.g. /lovelace/0 or /dashboard-meteo/0. Empty: the app just opens.",
+          "tap_url": "Dashboard path opened when tapping the notification. Empty: the Outdoor Brief dashboard (/outdoor-brief), which shows the same report live.",
           "message_style": "Short: only coefficients and next tide, when the summary image is attached (the image carries the details). Detailed: every tide in the text. A target that cannot receive the image (Telegram, ntfy, e-mail…) always gets the detailed text.",
           "extra_notify_targets": "Other phones or channels: any notify service or entity (another Companion phone, Telegram, Signal, ntfy, Gotify, e-mail…). Companion phones receive the image; other channels receive the title and detailed text."
         }
@@ -113,7 +113,7 @@
           "watch_mode": "Off; full notification (same text, no image, sent even without a phone); or short notice, sent only when the phone notification went through.",
           "watch_notify_target": "A notify service or entity of the watch, e.g. notify.mobile_app_galaxy_watch.",
           "notify_grouping": "Own notification for this port, or one notification grouping every port set to « grouped ». The grouped notification follows the settings (time, frequency, phone, watch) of the oldest grouped port; the others only add their tides.",
-          "tap_url": "Dashboard path opened when tapping the notification, e.g. /lovelace/0 or /dashboard-meteo/0. Empty: the app just opens.",
+          "tap_url": "Dashboard path opened when tapping the notification. Empty: the Outdoor Brief dashboard (/outdoor-brief), which shows the same report live.",
           "message_style": "Short: only coefficients and next tide, when the summary image is attached (the image carries the details). Detailed: every tide in the text. A target that cannot receive the image (Telegram, ntfy, e-mail…) always gets the detailed text.",
           "extra_notify_targets": "Other phones or channels: any notify service or entity (another Companion phone, Telegram, Signal, ntfy, Gotify, e-mail…). Companion phones receive the image; other channels receive the title and detailed text."
         }
