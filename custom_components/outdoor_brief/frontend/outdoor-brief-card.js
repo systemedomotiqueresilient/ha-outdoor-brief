@@ -2,7 +2,7 @@
 // JavaScript sans dépendance. Aucune valeur venant d'une entité n'est insérée en HTML :
 // le gabarit est fixe et les données passent par textContent.
 
-const CARD_VERSION = "0.3.5";
+const CARD_VERSION = "0.4.0";
 
 const TEXT = {
   fr: {
@@ -38,6 +38,18 @@ const TEXT = {
     updated: (t) => `Mis à jour à ${t}`,
     outdated: "Outdoor Brief a été mis à jour : rechargez la page.",
     reload: "Recharger",
+    colon: " :",
+    fishing: "Pêche à pied",
+    fishingWindow: (s, e, t, c) => `${s}–${e} (BM ${t}, coef ${c})`,
+    fishingNext: (d, s, e, c) => `prochain créneau ${d} ${s}–${e} (coef ${c})`,
+    fishingNone: (t) => `aucun créneau à coef ${t} ou plus sur 7 jours`,
+    sea: "Mer",
+    waves: (v) => `vagues ${v} m`,
+    swell: (d, v, p) => `houle ${d} ${v} m ${p} s`,
+    water: (v) => `eau ${v} °C`,
+    surge: (v) => (v >= 0 ? `surcote estimée +${v} cm` : `décote estimée ${v} cm`),
+    compass: ["N", "NE", "E", "SE", "S", "SO", "O", "NO"],
+    sourceMarine: "Données SHOM via Marées France · mer : Open-Meteo.com",
   },
   en: {
     title: "Outdoor Brief",
@@ -72,6 +84,18 @@ const TEXT = {
     updated: (t) => `Updated at ${t}`,
     outdated: "Outdoor Brief was updated: reload the page.",
     reload: "Reload",
+    colon: ":",
+    fishing: "Shore fishing",
+    fishingWindow: (s, e, t, c) => `${s}–${e} (LW ${t}, coef ${c})`,
+    fishingNext: (d, s, e, c) => `next window ${d} ${s}–${e} (coef ${c})`,
+    fishingNone: (t) => `no window at coef ${t} or more within 7 days`,
+    sea: "Sea",
+    waves: (v) => `waves ${v} m`,
+    swell: (d, v, p) => `swell ${d} ${v} m ${p} s`,
+    water: (v) => `water ${v} °C`,
+    surge: (v) => (v >= 0 ? `estimated surge +${v} cm` : `estimated drop ${v} cm`),
+    compass: ["N", "NE", "E", "SE", "S", "SW", "W", "NW"],
+    sourceMarine: "SHOM data via Marées France · sea: Open-Meteo.com",
   },
 };
 
@@ -84,6 +108,43 @@ const summaryEntities = (hass) =>
 
 const lang = (hass) => (String(hass?.locale?.language || hass?.language || "en").startsWith("fr") ? "fr" : "en");
 const t = (hass) => TEXT[lang(hass)];
+
+// --- Lignes de la 0.4 : pêche à pied et mer (communes à la carte et au rapport) ---------------
+const hhmm = (hass, iso) =>
+  new Date(iso).toLocaleTimeString(lang(hass), { hour: "2-digit", minute: "2-digit", timeZone: hass?.config?.time_zone });
+const num = (hass, v, d) =>
+  v === null || v === undefined ? "—" : Number(v).toLocaleString(lang(hass), { minimumFractionDigits: d, maximumFractionDigits: d });
+
+const fishingText = (hass, a) => {
+  const tx = t(hass);
+  const block = a.fishing;
+  if (!block) return null;
+  if (block.today && block.today.length) {
+    return block.today.map((w) => tx.fishingWindow(hhmm(hass, w.start), hhmm(hass, w.end), hhmm(hass, w.low_tide), w.coefficient)).join(" · ");
+  }
+  const n = block.next;
+  if (n) {
+    const day = new Date(n.low_tide).toLocaleDateString(lang(hass), { weekday: "short", day: "numeric", month: "short", timeZone: hass?.config?.time_zone });
+    return tx.fishingNext(day, hhmm(hass, n.start), hhmm(hass, n.end), n.coefficient);
+  }
+  return tx.fishingNone(block.threshold ?? 70);
+};
+
+const seaText = (hass, a) => {
+  const tx = t(hass);
+  const parts = [];
+  const m = a.marine;
+  if (m) {
+    if (m.wave_height !== null && m.wave_height !== undefined) parts.push(tx.waves(num(hass, m.wave_height, 1)));
+    if (m.swell_height !== null && m.swell_height !== undefined) {
+      const dir = m.swell_direction === null || m.swell_direction === undefined ? "" : tx.compass[Math.round((m.swell_direction % 360) / 45) % 8];
+      parts.push(tx.swell(dir, num(hass, m.swell_height, 1), num(hass, m.swell_period, 0)).replace("  ", " "));
+    }
+    if (m.sea_temperature !== null && m.sea_temperature !== undefined) parts.push(tx.water(num(hass, m.sea_temperature, 1)));
+  }
+  if (a.surge && a.surge.height_cm !== null && a.surge.height_cm !== undefined) parts.push(tx.surge(a.surge.height_cm));
+  return parts.length ? parts.join(" · ") : null;
+};
 
 const STYLE = `
   ha-card { padding: 16px; }
@@ -123,6 +184,8 @@ const TEMPLATE = `
       <div class="foot">
         <div class="spring"><span class="k"></span> <span class="v"></span></div>
         <div class="month"><span class="k"></span> <span class="v"></span></div>
+        <div class="fishing"><span class="k"></span> <span class="v"></span></div>
+        <div class="sea"><span class="k"></span> <span class="v"></span></div>
       </div>
       <div class="source"></div>
     </div>
@@ -260,7 +323,16 @@ class OutdoorBriefCard extends HTMLElement {
       this._$(".month .k").textContent = `${tx.monthMax} :`;
       this._$(".month .v").textContent = tx.monthMaxOn(month.coefficient, this._date(month.date, { day: "numeric", month: "short" }));
     }
-    this._$(".source").textContent = tx.source;
+    // 0.4 : pêche à pied, puis mer (Open-Meteo) et surcote
+    for (const [sel, label, text] of [
+      [".fishing", tx.fishing, fishingText(this._hass, a)],
+      [".sea", tx.sea, seaText(this._hass, a)],
+    ]) {
+      this._$(sel).hidden = !text;
+      this._$(`${sel} .k`).textContent = `${label}${tx.colon}`;
+      this._$(`${sel} .v`).textContent = text || "";
+    }
+    this._$(".source").textContent = a.marine ? tx.sourceMarine : tx.source;
   }
 }
 
@@ -321,6 +393,7 @@ const REPORT_STYLE = `
   td.value { font-weight: 500; }
   tr:last-child td { border-bottom: none; }
   .r-foot { margin-top: 16px; display: grid; gap: 4px; }
+  .r-extra { margin-top: 8px; font-size: .95em; }
   .r-source, .r-updated { margin-top: 10px; font-size: .8em; color: var(--secondary-text-color); }
   .r-empty { color: var(--secondary-text-color); }
 `;
@@ -409,6 +482,9 @@ const buildReport = (hass, summaries) => {
     const status = statusText(hass, a);
     if (status) root.append(el("div", { class: "r-status", text: status }));
     root.append(portTable(hass, a));
+    for (const [label, text] of [[tx.fishing, fishingText(hass, a)], [tx.sea, seaText(hass, a)]]) {
+      if (text) root.append(el("div", { class: "r-extra", text: `${label}${tx.colon} ${text}` }));
+    }
   }
   const foot = el("div", { class: "r-foot" });
   const spring = first.next_spring_tide;
@@ -423,7 +499,8 @@ const buildReport = (hass, summaries) => {
   if (first.month_max) {
     foot.append(el("div", { text: `${tx.monthMax} : ${tx.monthMaxOn(first.month_max.coefficient, fmtDay(hass, first.month_max.date, { day: "numeric", month: "short" }))}` }));
   }
-  root.append(foot, el("div", { class: "r-source", text: tx.source }));
+  const source = summaries.some((a) => a.marine) ? tx.sourceMarine : tx.source;
+  root.append(foot, el("div", { class: "r-source", text: source }));
   return root;
 };
 

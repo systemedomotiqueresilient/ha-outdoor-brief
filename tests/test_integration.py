@@ -91,6 +91,12 @@ async def test_full_flow(hass: HomeAssistant, marees: FakeMarees, freezer) -> No
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"], {**notif, "watch_notify_target": "notify.mobile_app_galaxy_watch"}
     )
+    # Écran 5 : Open-Meteo, désactivé par défaut (aucune requête)
+    assert result["step_id"] == "marine"
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {"marine_enabled": False, "marine_location": {"latitude": 47.0, "longitude": -3.0}},
+    )
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["title"] == "Port-Louis (Locmalo)"
     assert result["data"] == {
@@ -100,6 +106,11 @@ async def test_full_flow(hass: HomeAssistant, marees: FakeMarees, freezer) -> No
     }
     assert result["options"] == {
         CONF_SPRING_THRESHOLD: 95,
+        "fishing_coefficient": 70,
+        "fishing_daylight_only": True,
+        "pressure_entity": None,
+        "marine_enabled": False,
+        "marine_location": {"latitude": 47.0, "longitude": -3.0},
         **notif,
         "watch_notify_target": "notify.mobile_app_galaxy_watch",
         "notify_grouping": "own",
@@ -150,7 +161,12 @@ async def test_options_flow(hass: HomeAssistant, entry) -> None:
     )
     assert result["type"] is FlowResultType.CREATE_ENTRY
     await hass.async_block_till_done()
-    assert entry.options == {CONF_SPRING_THRESHOLD: 95}
+    assert entry.options == {
+        CONF_SPRING_THRESHOLD: 95,
+        "fishing_coefficient": 70,
+        "fishing_daylight_only": True,
+        "pressure_entity": None,
+    }
     assert entry.data[CONF_ADMIN_NOTIFY_TARGET] == MOBILE
     state = hass.states.get(_entity(hass, entry, "next_spring_tide"))
     assert state.state == "2026-11-25"  # le seuil 95 est appliqué après rechargement

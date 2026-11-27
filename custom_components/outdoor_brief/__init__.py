@@ -12,6 +12,7 @@ from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import (
+    Event,
     HomeAssistant,
     ServiceCall,
     ServiceResponse,
@@ -20,7 +21,11 @@ from homeassistant.core import (
 )
 from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.event import (
+    EventStateChangedData,
+    async_track_state_change_event,
+    async_track_time_interval,
+)
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.util import dt as dt_util
 import voluptuous as vol
@@ -28,6 +33,8 @@ import voluptuous as vol
 from .alerts import Notifier
 from .const import (
     CARD_FILE,
+    CONF_MARINE_ENABLED,
+    CONF_PRESSURE_ENTITY,
     DOMAIN,
     FRONTEND_URL,
     PANEL_ELEMENT,
@@ -38,6 +45,7 @@ from .const import (
     VERSION,
 )
 from .coordinator import OutdoorBriefCoordinator
+from .marine import MarineCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -112,6 +120,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: OutdoorBriefConfigEntry)
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinator
     coordinator.notifier = Notifier(hass, entry, coordinator)
+
+    # Open-Meteo (0.4) : seulement si activé. Un échec ne bloque pas les marées : seules
+    # les entités de mer deviennent indisponibles.
+    if entry.options.get(CONF_MARINE_ENABLED):
+        coordinator.marine = MarineCoordinator(hass, entry)
+        await coordinator.marine.async_refresh()
+        # Le résumé, l'image et la surcote suivent chaque relecture d'Open-Meteo.
+        entry.async_on_unload(
+            coordinator.marine.async_add_listener(coordinator.async_update_listeners)
+        )
+
+    # Surcote : recalcul dès que le capteur de pression choisi change.
+    if pressure_entity := entry.options.get(CONF_PRESSURE_ENTITY):
+
+        @callback
+        def _pressure_changed(_event: Event[EventStateChangedData]) -> None:
+            coordinator.async_update_listeners()
+
+        entry.async_on_unload(
+            async_track_state_change_event(hass, [pressure_entity], _pressure_changed)
+        )
 
     # Le marnage et le douzième dépendent de l'heure : on les recalcule sans relire la source.
     @callback

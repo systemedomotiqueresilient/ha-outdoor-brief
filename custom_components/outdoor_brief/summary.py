@@ -10,7 +10,13 @@ from .coordinator import BriefData
 from .tides import month_max, spring_tides, surrounding, tidal_range, tides_of_day, twelfth
 
 
-def build_summary(data: BriefData, now: datetime, threshold: int, port: str) -> dict[str, Any]:
+def build_summary(
+    data: BriefData,
+    now: datetime,
+    threshold: int,
+    port: str,
+    extras: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Attributs du « Résumé du jour » : ajouts possibles, retraits en version majeure."""
     today = now.date()
     previous, next_tide = surrounding(data.tides, now)
@@ -33,4 +39,9 @@ def build_summary(data: BriefData, now: datetime, threshold: int, port: str) -> 
         "month_max": {"date": best[0].isoformat(), "coefficient": best[1]} if best else None,
         "spring_tide_threshold": threshold,
         "source": "SHOM via Marées France",
+        # 0.4 : pêche à pied, mer (Open-Meteo, facultatif) et surcote estimée
+        "fishing": None,
+        "marine": None,
+        "surge": None,
+        **(extras or {}),
     }

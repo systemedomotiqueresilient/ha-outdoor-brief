@@ -54,6 +54,7 @@ from .const import (
     WATCH_OFF,
 )
 from .coordinator import OutdoorBriefCoordinator
+from .extras import summary_extras
 from .render import fmt_day, fmt_time, halves, texts
 from .summary import build_summary
 
@@ -72,6 +73,7 @@ MESSAGES = {
         "notice_summary": "Résumé {port} envoyé sur le téléphone",
         "notice_spring": "Grande marée {day} (coef {coef}) : détails sur le téléphone",
         "coef": "coef",
+        "fishing": "pêche",
         "high": "PM",
         "low": "BM",
     },
@@ -87,6 +89,7 @@ MESSAGES = {
         "notice_summary": "{port} brief sent to the phone",
         "notice_spring": "Spring tide {day} (coef {coef}): details on the phone",
         "coef": "coef",
+        "fishing": "fishing",
         "high": "HW",
         "low": "LW",
     },
@@ -108,6 +111,9 @@ def summary_message(summary: dict[str, Any], language: str | None) -> str:
             parts.append(f"{msg[kind]} {' · '.join(times)}")
     if coefs := summary.get("coefficients"):
         parts.append(f"{msg['coef']} {'-'.join(str(c) for c in coefs)}")
+    if today := (summary.get("fishing") or {}).get("today"):  # 0.4
+        spans = [f"{fmt_time(w['start'])}-{fmt_time(w['end'])}" for w in today]
+        parts.append(f"{msg['fishing']} {' · '.join(spans)}")
     return " | ".join(parts) or "—"
 
 
@@ -275,7 +281,13 @@ class Notifier:
 
     def summary(self, now: datetime) -> dict[str, Any]:
         threshold = int(self.entry.options.get(CONF_SPRING_THRESHOLD, DEFAULT_SPRING_THRESHOLD))
-        return build_summary(self.coordinator.data, now, threshold, self.entry.title)
+        return build_summary(
+            self.coordinator.data,
+            now,
+            threshold,
+            self.entry.title,
+            summary_extras(self.hass, self.entry, self.coordinator, now),
+        )
 
     async def async_run(self, now: datetime, force: bool = False) -> dict[str, bool]:
         """Passage quotidien : événements toujours, envois selon la fréquence.

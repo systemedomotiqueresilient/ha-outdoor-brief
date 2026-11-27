@@ -26,11 +26,17 @@
         "description": "Ces réglages restent modifiables ensuite, depuis les options de l'intégration.",
         "data": {
           "spring_tide_threshold": "Seuil des grandes marées (coefficient)",
-          "admin_notify_target": "Téléphone admin (facultatif)"
+          "admin_notify_target": "Téléphone admin (facultatif)",
+          "fishing_coefficient": "Pêche à pied : coefficient minimum",
+          "fishing_daylight_only": "Pêche à pied : de jour seulement",
+          "pressure_entity": "Capteur de pression pour la surcote (facultatif)"
         },
         "data_description": {
           "spring_tide_threshold": "Un jour compte comme grande marée quand son plus fort coefficient atteint cette valeur. 100 est la convention habituelle ; baissez-le pour être prévenu plus souvent des fortes marées (décembre 2026 culmine à 99, par exemple).",
-          "admin_notify_target": "Un service notify.mobile_app_* ou une entité notify de l'application Companion. Prérempli avec le téléphone déjà choisi dans une autre intégration SDR, s'il y en a un. Servira aux notifications à partir de la version 0.3."
+          "admin_notify_target": "Un service notify.mobile_app_* ou une entité notify de l'application Companion. Prérempli avec le téléphone déjà choisi dans une autre intégration SDR, s'il y en a un. Servira aux notifications à partir de la version 0.3.",
+          "fishing_coefficient": "Un créneau de pêche à pied entoure une basse mer dont le coefficient atteint cette valeur : de 2 heures avant la basse mer à 1 heure après. 70 est un minimum courant ; à partir de 90, la mer découvre le plus d'estran.",
+          "fishing_daylight_only": "Ne garder que les créneaux dont la basse mer tombe entre le lever et le coucher du soleil (au lieu de Home Assistant).",
+          "pressure_entity": "Un capteur de pression local ou une entité météo. La surcote est estimée par l'effet de baromètre inverse : environ 1 cm d'eau par hPa sous 1013 hPa, sans le vent. Vide : la pression d'Open-Meteo est utilisée s'il est activé, sinon pas d'entité de surcote."
         }
       },
       "notifications": {
@@ -58,13 +64,27 @@
           "message_style": "Court : seulement les coefficients et la prochaine marée, quand l'image du résumé est jointe (elle porte le détail). Détaillé : toutes les marées dans le texte. Une cible qui ne reçoit pas l'image (Telegram, ntfy, e-mail…) reçoit toujours le texte détaillé.",
           "extra_notify_targets": "D'autres téléphones ou canaux : n'importe quel service ou entité notify (un autre téléphone Companion, Telegram, Signal, ntfy, Gotify, e-mail…). Les téléphones Companion reçoivent l'image ; les autres canaux, le titre et le texte détaillé."
         }
+      },
+      "marine": {
+        "title": "Conditions de mer (Open-Meteo)",
+        "description": "Service en ligne facultatif. Désactivé, Outdoor Brief ne fait aucune requête sur Internet. Activé, il lit chaque heure sur Open-Meteo (gratuit, sans compte, données sous licence CC BY 4.0) les vagues, la houle et la température de l'eau au point choisi ci-dessous, ainsi que la pression au niveau de la mer pour la surcote.",
+        "data": {
+          "marine_enabled": "Activer Open-Meteo",
+          "marine_location": "Point en mer"
+        },
+        "data_description": {
+          "marine_enabled": "Crée les entités vagues, houle et température de l'eau. Désactiver les supprime.",
+          "marine_location": "Choisissez un point juste au large : les modèles de vagues ne couvrent ni l'intérieur des terres ni les estuaires étroits. Par défaut, le lieu de Home Assistant."
+        }
       }
     },
     "error": {
       "invalid_target": "Indiquez un service ou une entité notify, par exemple notify.mobile_app_mon_telephone.",
       "watch_target_required": "Choisissez la cible notify de la montre, ou désactivez la montre.",
       "invalid_tap_url": "Indiquez un chemin qui commence par /, par exemple /lovelace/0.",
-      "invalid_extra_target": "Chaque destinataire doit être un service ou une entité notify, par exemple notify.telegram."
+      "invalid_extra_target": "Chaque destinataire doit être un service ou une entité notify, par exemple notify.telegram.",
+      "marine_unreachable": "Open-Meteo n'a pas répondu. Vérifiez la connexion à Internet, ou désactivez cette option.",
+      "marine_no_data": "Open-Meteo n'a pas de données de vagues pour ce point : déplacez-le plus au large."
     },
     "abort": {
       "already_configured": "Ce port est déjà configuré.",
@@ -77,7 +97,8 @@
         "title": "Outdoor Brief",
         "menu_options": {
           "settings": "Réglages (seuil des grandes marées, téléphone admin)",
-          "notifications": "Notifications (résumé, heure, image, montre)"
+          "notifications": "Notifications (résumé, heure, image, montre)",
+          "marine": "Conditions de mer (Open-Meteo, facultatif)"
         }
       },
       "settings": {
@@ -85,11 +106,17 @@
         "description": "Ces réglages restent modifiables ensuite, depuis les options de l'intégration.",
         "data": {
           "spring_tide_threshold": "Seuil des grandes marées (coefficient)",
-          "admin_notify_target": "Téléphone admin (facultatif)"
+          "admin_notify_target": "Téléphone admin (facultatif)",
+          "fishing_coefficient": "Pêche à pied : coefficient minimum",
+          "fishing_daylight_only": "Pêche à pied : de jour seulement",
+          "pressure_entity": "Capteur de pression pour la surcote (facultatif)"
         },
         "data_description": {
           "spring_tide_threshold": "Un jour compte comme grande marée quand son plus fort coefficient atteint cette valeur. 100 est la convention habituelle ; baissez-le pour être prévenu plus souvent des fortes marées (décembre 2026 culmine à 99, par exemple).",
-          "admin_notify_target": "Un service notify.mobile_app_* ou une entité notify de l'application Companion. Prérempli avec le téléphone déjà choisi dans une autre intégration SDR, s'il y en a un. Servira aux notifications à partir de la version 0.3."
+          "admin_notify_target": "Un service notify.mobile_app_* ou une entité notify de l'application Companion. Prérempli avec le téléphone déjà choisi dans une autre intégration SDR, s'il y en a un. Servira aux notifications à partir de la version 0.3.",
+          "fishing_coefficient": "Un créneau de pêche à pied entoure une basse mer dont le coefficient atteint cette valeur : de 2 heures avant la basse mer à 1 heure après. 70 est un minimum courant ; à partir de 90, la mer découvre le plus d'estran.",
+          "fishing_daylight_only": "Ne garder que les créneaux dont la basse mer tombe entre le lever et le coucher du soleil (au lieu de Home Assistant).",
+          "pressure_entity": "Un capteur de pression local ou une entité météo. La surcote est estimée par l'effet de baromètre inverse : environ 1 cm d'eau par hPa sous 1013 hPa, sans le vent. Vide : la pression d'Open-Meteo est utilisée s'il est activé, sinon pas d'entité de surcote."
         }
       },
       "notifications": {
@@ -117,13 +144,27 @@
           "message_style": "Court : seulement les coefficients et la prochaine marée, quand l'image du résumé est jointe (elle porte le détail). Détaillé : toutes les marées dans le texte. Une cible qui ne reçoit pas l'image (Telegram, ntfy, e-mail…) reçoit toujours le texte détaillé.",
           "extra_notify_targets": "D'autres téléphones ou canaux : n'importe quel service ou entité notify (un autre téléphone Companion, Telegram, Signal, ntfy, Gotify, e-mail…). Les téléphones Companion reçoivent l'image ; les autres canaux, le titre et le texte détaillé."
         }
+      },
+      "marine": {
+        "title": "Conditions de mer (Open-Meteo)",
+        "description": "Service en ligne facultatif. Désactivé, Outdoor Brief ne fait aucune requête sur Internet. Activé, il lit chaque heure sur Open-Meteo (gratuit, sans compte, données sous licence CC BY 4.0) les vagues, la houle et la température de l'eau au point choisi ci-dessous, ainsi que la pression au niveau de la mer pour la surcote.",
+        "data": {
+          "marine_enabled": "Activer Open-Meteo",
+          "marine_location": "Point en mer"
+        },
+        "data_description": {
+          "marine_enabled": "Crée les entités vagues, houle et température de l'eau. Désactiver les supprime.",
+          "marine_location": "Choisissez un point juste au large : les modèles de vagues ne couvrent ni l'intérieur des terres ni les estuaires étroits. Par défaut, le lieu de Home Assistant."
+        }
       }
     },
     "error": {
       "invalid_target": "Indiquez un service ou une entité notify, par exemple notify.mobile_app_mon_telephone.",
       "watch_target_required": "Choisissez la cible notify de la montre, ou désactivez la montre.",
       "invalid_tap_url": "Indiquez un chemin qui commence par /, par exemple /lovelace/0.",
-      "invalid_extra_target": "Chaque destinataire doit être un service ou une entité notify, par exemple notify.telegram."
+      "invalid_extra_target": "Chaque destinataire doit être un service ou une entité notify, par exemple notify.telegram.",
+      "marine_unreachable": "Open-Meteo n'a pas répondu. Vérifiez la connexion à Internet, ou désactivez cette option.",
+      "marine_no_data": "Open-Meteo n'a pas de données de vagues pour ce point : déplacez-le plus au large."
     }
   },
   "selector": {
@@ -181,6 +222,33 @@
       },
       "admin_phone": {
         "name": "Téléphone admin"
+      },
+      "next_fishing_window": {
+        "name": "Prochain créneau de pêche à pied"
+      },
+      "storm_surge": {
+        "name": "Surcote estimée"
+      },
+      "wave_height": {
+        "name": "Hauteur des vagues"
+      },
+      "wave_period": {
+        "name": "Période des vagues"
+      },
+      "wave_direction": {
+        "name": "Direction des vagues"
+      },
+      "swell_height": {
+        "name": "Hauteur de la houle"
+      },
+      "swell_period": {
+        "name": "Période de la houle"
+      },
+      "swell_direction": {
+        "name": "Direction de la houle"
+      },
+      "sea_temperature": {
+        "name": "Température de l'eau"
       }
     },
     "image": {
@@ -201,6 +269,12 @@
     },
     "entry_not_loaded": {
       "message": "Aucune entrée Outdoor Brief n'est chargée."
+    },
+    "marine_unreachable": {
+      "message": "Open-Meteo n'a pas répondu : {error}"
+    },
+    "marine_no_data": {
+      "message": "Open-Meteo n'a pas de données de vagues au point choisi : déplacez-le plus au large dans les options."
     }
   },
   "services": {

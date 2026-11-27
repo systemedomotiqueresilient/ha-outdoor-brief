@@ -38,6 +38,8 @@ def auto_enable_custom_integrations(enable_custom_integrations):
 @pytest.fixture(autouse=True)
 async def paris(hass: HomeAssistant) -> None:
     await hass.config.async_set_time_zone("Europe/Paris")
+    # Point générique au large de la Bretagne (lever et coucher du soleil réalistes)
+    hass.config.latitude, hass.config.longitude = 47.0, -3.0
 
 
 class FakeMarees:

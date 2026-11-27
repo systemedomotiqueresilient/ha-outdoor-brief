@@ -2,6 +2,15 @@
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/), versions selon [SemVer](https://semver.org/lang/fr/).
 
+## [0.4.0] - 2026-11-27
+
+### Ajouté
+- **Pêche à pied** : capteur « Prochain créneau de pêche à pied » (horodatage du début, créneaux suivants en attributs). Un créneau va de 2 h avant à 1 h après une basse mer dont le coefficient atteint le seuil (réglage, 70 par défaut) ; la basse mer prend le plus fort coefficient des pleines mers voisines. Option « de jour seulement » (activée par défaut, lever et coucher du soleil au lieu de HA).
+- **Surcote estimée** (cm, effet de baromètre inverse : 1 cm par hPa sous 1013,25 hPa, vent non compté). Pression d'un capteur local ou d'une entité météo choisis dans les réglages, sinon d'Open-Meteo. Entité créée seulement s'il y a une source de pression ; recalcul dès que le capteur change.
+- **Open-Meteo, écran distinct et désactivé par défaut** (5e écran de configuration et entrée « Conditions de mer » des options) : vagues, houle (hauteur, période, direction), température de l'eau et pression au niveau de la mer, relues toutes les heures au point choisi. Désactivé : aucune requête, aucune entité de mer. Requête d'essai à l'activation (erreurs « injoignable » et « pas de données de vagues pour ce point »). Un échec ne rend indisponibles que les entités de mer.
+- **Résumé du jour** : blocs `fishing`, `marine` et `surge` (ajouts seulement, `schema_version` reste à 1).
+- **Carte, tableau de bord et image** : lignes « Pêche à pied » et « Mer » sous le tableau de chaque port ; source Open-Meteo citée quand elle est utilisée. Texte détaillé des notifications : créneaux de pêche du jour.
+
 ## [0.3.5] - 2026-11-25
 
 ### Ajouté

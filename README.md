@@ -4,11 +4,13 @@
 
 The **daily brief for what happens outdoors**, in Home Assistant. Version 0.2 covers the coast: today's tides, tidal range, the current tide twelfth and the next spring tide, gathered in a single summary sensor shown by a Lovelace card and sent each morning to your phone, with the summary image, and optionally to a smartwatch.
 
-> **Status: 0.3.5, early development.** Marine weather (0.4) and the garden profile (0.5) are on the [roadmap](ROADMAP.md).
+> **Status: 0.4.0, early development.** The garden profile (0.5) is in the [roadmap](ROADMAP.md).
 
 ## Where the data comes from
 
 Outdoor Brief **does not fetch tides from the Internet**. It reads them from the [Marées France](https://github.com/KipK/marees_france) integration (SHOM data), which must be installed first, through its actions `marees_france.get_tides_data` and `marees_france.get_coefficients_data`. Everything else is computed locally.
+
+One exception, **optional and disabled by default**: sea conditions (waves, swell, water temperature) come from [Open-Meteo](https://open-meteo.com) (free, no account, CC BY 4.0 data), enabled on a separate configuration screen. Disabled, Outdoor Brief makes no Internet request at all.
 
 ## Installation
 
@@ -28,6 +30,19 @@ Outdoor Brief **does not fetch tides from the Internet**. It reads them from the
 | Summary image | PNG (image entity) | used as notification attachment |
 
 The tidal range and the twelfth are recomputed every 5 minutes; Marées France is read again every hour. The **spring tide threshold** (100 by default) can be changed in the options: December 2026, for instance, peaks at 99.
+
+### Added in 0.4
+
+| Entity | Created | State | Main attributes |
+|---|---|---|---|
+| Next shore fishing window | always | window start | `end`, `low_tide`, `height`, `coefficient`, `daylight`, `threshold`, `upcoming` |
+| Estimated storm surge | if a pressure sensor is chosen or Open-Meteo is enabled | cm (+ surge, − drop) | `pressure_hpa`, `reference_hpa`, `source` |
+| Wave height, period and direction, swell height, period and direction, sea temperature | if Open-Meteo is enabled | m, s, °, °C | |
+
+- **Shore fishing**: a window runs from **2 h before to 1 h after** a low tide whose coefficient reaches the chosen threshold (70 by default). Marées France only gives coefficients on high tides: a low tide takes the highest of its neighbouring high tides. By default only windows whose low tide falls in daylight are kept. These are time markers, not safety advice.
+- **Storm surge**: inverse barometer estimate, about 1 cm of water per hPa below 1013.25 hPa (a drop above). Wind is not included. Pressure comes from a local sensor (or weather entity) chosen in the settings, otherwise from Open-Meteo if enabled.
+- **Sea**: pick a point just off the coast; wave models do not cover inland areas. Read every hour. An Open-Meteo failure only affects the sea entities.
+- The daily summary gains three blocks: `fishing`, `marine`, `surge` (`null` when the data is not chosen). The card, dashboard and image show them under each port's table.
 
 ## Lovelace card
 

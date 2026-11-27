@@ -77,6 +77,18 @@ TEXT = {
         "in_days": "dans {n} j",
         "month_max": "Plus fort coefficient du mois : {c} le {d}",
         "source": "Données SHOM via Marées France",
+        "source_marine": "Données SHOM via Marées France · mer : Open-Meteo.com",
+        "fishing": "Pêche à pied : {w}",
+        "fishing_window": "{s}–{e} (BM {t}, coef {c})",
+        "fishing_next": "Pêche à pied : prochain créneau {d} {s}–{e} (coef {c})",
+        "fishing_none": "Pêche à pied : aucun créneau à coef {t} ou plus sur 7 jours",
+        "sea": "Mer : {v}",
+        "waves": "vagues {v} m",
+        "swell": "houle {d} {v} m {p} s",
+        "water": "eau {v} °C",
+        "surge": "surcote estimée +{v} cm",
+        "drop": "décote estimée {v} cm",
+        "compass": ("N", "NE", "E", "SE", "S", "SO", "O", "NO"),
     },
     "en": {
         "days": ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"),
@@ -113,6 +125,18 @@ TEXT = {
         "in_days": "in {n} d",
         "month_max": "Highest coefficient this month: {c} on {d}",
         "source": "SHOM data via Marées France",
+        "source_marine": "SHOM data via Marées France · sea: Open-Meteo.com",
+        "fishing": "Shore fishing: {w}",
+        "fishing_window": "{s}–{e} (LW {t}, coef {c})",
+        "fishing_next": "Shore fishing: next window {d} {s}–{e} (coef {c})",
+        "fishing_none": "Shore fishing: no window at coef {t} or more within 7 days",
+        "sea": "Sea: {v}",
+        "waves": "waves {v} m",
+        "swell": "swell {d} {v} m {p} s",
+        "water": "water {v} °C",
+        "surge": "estimated surge +{v} cm",
+        "drop": "estimated drop {v} cm",
+        "compass": ("N", "NE", "E", "SE", "S", "SW", "W", "NW"),
     },
 }
 
@@ -132,6 +156,14 @@ def _fit(draw: ImageDraw.ImageDraw, text: str, size: int) -> Any:
     while size > 24 and draw.textlength(text, font=_font(size, medium=True)) > width:
         size -= 1
     return _font(size, medium=True)
+
+
+def _fit_small(draw: ImageDraw.ImageDraw, text: str) -> Any:
+    """Police de 30 px au plus, réduite si la ligne dépasse la largeur utile."""
+    size = 30
+    while size > 20 and draw.textlength(text, font=_font(size)) > WIDTH - 2 * MARGIN:
+        size -= 1
+    return _font(size)
 
 
 def texts(language: str | None) -> dict[str, Any]:
@@ -201,6 +233,70 @@ def halves(summary: dict[str, Any]) -> dict[str, list[dict[str, Any] | None]]:
     return table
 
 
+def compass(degrees: float | None, lang: dict[str, Any]) -> str:
+    """Direction d'où vient la houle, en 8 points."""
+    if degrees is None:
+        return ""
+    return lang["compass"][round(degrees % 360 / 45) % 8]
+
+
+def fishing_line(summary: dict[str, Any], lang: dict[str, Any]) -> str | None:
+    """« Pêche à pied : 08:32–11:32 (BM 10:32, coef 76) » ou le prochain créneau."""
+    block = summary.get("fishing")
+    if not block:
+        return None
+    if block.get("today"):
+        return lang["fishing"].format(
+            w=" · ".join(
+                lang["fishing_window"].format(
+                    s=fmt_time(w["start"]),
+                    e=fmt_time(w["end"]),
+                    t=fmt_time(w["low_tide"]),
+                    c=w["coefficient"],
+                )
+                for w in block["today"]
+            )
+        )
+    if nxt := block.get("next"):
+        day = datetime.fromisoformat(nxt["low_tide"]).date()
+        return lang["fishing_next"].format(
+            d=fmt_day(day, lang),
+            s=fmt_time(nxt["start"]),
+            e=fmt_time(nxt["end"]),
+            c=nxt["coefficient"],
+        )
+    return lang["fishing_none"].format(t=block.get("threshold", 70))
+
+
+def sea_line(summary: dict[str, Any], lang: dict[str, Any]) -> str | None:
+    """« Mer : vagues 1,4 m · houle O 1,2 m 11 s · eau 13,4 °C · surcote estimée +8 cm »."""
+    parts = []
+    if marine := summary.get("marine"):
+        if marine.get("wave_height") is not None:
+            parts.append(lang["waves"].format(v=fmt_number(marine["wave_height"], lang, 1)))
+        if marine.get("swell_height") is not None:
+            parts.append(
+                lang["swell"]
+                .format(
+                    d=compass(marine.get("swell_direction"), lang),
+                    v=fmt_number(marine["swell_height"], lang, 1),
+                    p=fmt_number(marine.get("swell_period"), lang, 0),
+                )
+                .replace("  ", " ")
+            )
+        if marine.get("sea_temperature") is not None:
+            parts.append(lang["water"].format(v=fmt_number(marine["sea_temperature"], lang, 1)))
+    if (value := summary.get("surge")) and value.get("height_cm") is not None:
+        cm = value["height_cm"]
+        parts.append(lang["surge"].format(v=cm) if cm >= 0 else lang["drop"].format(v=cm))
+    return lang["sea"].format(v=" · ".join(parts)) if parts else None
+
+
+def port_lines(summary: dict[str, Any], lang: dict[str, Any]) -> list[str]:
+    """Lignes propres à un port, sous son tableau (0.4)."""
+    return [line for line in (fishing_line(summary, lang), sea_line(summary, lang)) if line]
+
+
 def footer_lines(summary: dict[str, Any], lang: dict[str, Any]) -> list[str]:
     today = date.fromisoformat(summary["date"])
     lines = []
@@ -236,7 +332,8 @@ def render_summaries(
     first = summaries[0]
 
     section = (56 if multi else 0) + 70 + 48 + 3 * 84 + (28 if multi else 0)
-    height = 168 + len(summaries) * section + 24 + 2 * 54 + 80
+    extra = sum(len(port_lines(summary, lang)) for summary in summaries) * 48
+    height = 168 + len(summaries) * section + extra + 24 + 2 * 54 + 80
     image = Image.new("RGB", (WIDTH, height), colors["bg"])
     draw = ImageDraw.Draw(image)
 
@@ -288,6 +385,9 @@ def render_summaries(
             for x, value in zip(col_x[1:], values, strict=True):
                 draw.text((x, y), value, font=f_value, fill=colors["text"])
             y += 66
+        for line in port_lines(summary, lang):
+            draw.text((MARGIN, y), line, font=_fit_small(draw, line), fill=colors["text"])
+            y += 48
         if multi:
             y += 28
 
@@ -296,7 +396,8 @@ def render_summaries(
         draw.text((MARGIN, y), line, font=f_small, fill=colors["text"])
         y += 54
     y += 10
-    draw.text((MARGIN, y), lang["source"], font=_font(24), fill=colors["muted"])
+    source = lang["source_marine"] if any(x.get("marine") for x in summaries) else lang["source"]
+    draw.text((MARGIN, y), source, font=_font(24), fill=colors["muted"])
 
     buffer = BytesIO()
     image.save(buffer, format="PNG", optimize=True)

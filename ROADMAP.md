@@ -3,6 +3,7 @@
 Validée par Mathieu le 2026-11-21 (cahier des charges « Outdoor Brief — Cahier des charges »).
 
 ## Fait
+- **0.4.0** : créneau de pêche à pied, surcote estimée (capteur local ou Open-Meteo), Open-Meteo Marine sur un écran distinct, désactivé par défaut.
 - **0.3.5** : tableau de bord dédié `/outdoor-brief` (rapport en temps réel, cible par défaut du toucher), carte `outdoor-brief-report-card`.
 - **0.3.4** : texte court quand l'image est jointe, destinataires supplémentaires sur tout canal notify, ligne d'état ajustée à la largeur de l'image.
 - **0.3.3** : module commun admin_phone 1.2.0 (Outdoor Brief reconnu comme intégration sœur).
@@ -15,10 +16,9 @@ Validée par Mathieu le 2026-11-21 (cahier des charges « Outdoor Brief — Cahi
 - **0.1.0** : profil littoral, lecture de Marées France, marnage, douzièmes, prochaine grande marée, capteur résumé du jour, téléphone admin.
 
 ## Prévu
-1. **0.4** : Open-Meteo Marine (houle) sur un écran distinct, **désactivé par défaut** ; indicateur de surcote ; créneau de pêche à pied.
-2. **0.5** : calcul lunaire local (Python pur), profil potager (gel, pluie, lune), déclinaison et longitude écliptique exposées.
-3. **0.6** : courbe de marée dans la carte, lignes météo et lune dans le tableau, contrat développeurs publié.
-4. **1.0** : contrat gelé, publication HACS et Marketplace.
+1. **0.5** : calcul lunaire local (Python pur), profil potager (gel, pluie, lune), déclinaison et longitude écliptique exposées.
+2. **0.6** : courbe de marée dans la carte, lignes météo et lune dans le tableau, contrat développeurs publié.
+3. **1.0** : contrat gelé, publication HACS et Marketplace.
 
 ## Pistes
 - **Port secondaire** (décalage horaire et facteur de hauteur) : seulement sur demande, Marées France couvrant déjà les petits ports.

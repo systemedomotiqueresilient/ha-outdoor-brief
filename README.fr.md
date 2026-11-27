@@ -4,11 +4,13 @@
 
 Le **résumé du jour pour ce qui se passe dehors**, dans Home Assistant. La version 0.2 couvre le littoral : les marées du jour, le marnage, le douzième de marée en cours et la prochaine grande marée, rassemblés dans un capteur de résumé affichés par une carte Lovelace et envoyés chaque matin sur votre téléphone, avec l'image du résumé, et si vous le souhaitez sur une montre connectée.
 
-> **Statut : 0.3.5, début de développement.** La météo marine (0.4) et le profil potager (0.5) sont dans la [feuille de route](ROADMAP.md).
+> **Statut : 0.4.0, début de développement.** Le profil potager (0.5) est dans la [feuille de route](ROADMAP.md).
 
 ## D'où viennent les données
 
 Outdoor Brief **ne récupère pas les marées sur Internet**. Il les lit dans l'intégration [Marées France](https://github.com/KipK/marees_france) (données du SHOM), à installer d'abord, au moyen de ses actions `marees_france.get_tides_data` et `marees_france.get_coefficients_data`. Tout le reste est calculé localement.
+
+Une seule exception, **facultative et désactivée par défaut** : les conditions de mer (vagues, houle, température de l'eau) viennent d'[Open-Meteo](https://open-meteo.com) (gratuit, sans compte, données CC BY 4.0), activé sur un écran de configuration à part. Désactivé, Outdoor Brief ne fait aucune requête sur Internet.
 
 ## Installation
 
@@ -26,6 +28,19 @@ Outdoor Brief **ne récupère pas les marées sur Internet**. Il les lit dans l'
 | Prochaine grande marée | date | `coefficient`, `threshold`, `upcoming` |
 | Téléphone admin | cible de notification | `notify_service` (convention commune SDR) |
 | Image du résumé | PNG (entité image) | pièce jointe des notifications |
+
+### Ajouts de la 0.4
+
+| Entité | Créée | État | Attributs principaux |
+|---|---|---|---|
+| Prochain créneau de pêche à pied | toujours | début du créneau | `end`, `low_tide`, `height`, `coefficient`, `daylight`, `threshold`, `upcoming` |
+| Surcote estimée | si un capteur de pression est choisi ou Open-Meteo activé | cm (+ surcote, − décote) | `pressure_hpa`, `reference_hpa`, `source` |
+| Hauteur et période des vagues, direction des vagues, hauteur, période et direction de la houle, température de l'eau | si Open-Meteo est activé | m, s, °, °C | |
+
+- **Pêche à pied** : un créneau va de **2 h avant à 1 h après** une basse mer dont le coefficient atteint le seuil choisi (70 par défaut). Marées France ne donne le coefficient que sur les pleines mers : la basse mer prend le plus fort des pleines mers voisines. Par défaut, seuls les créneaux dont la basse mer tombe de jour sont gardés. Ce sont des repères horaires, pas un conseil de sécurité.
+- **Surcote** : estimation de l'effet de baromètre inverse, environ 1 cm d'eau par hPa sous 1013,25 hPa (décote au-dessus). Le vent n'est pas compté. La pression vient d'un capteur local (ou d'une entité météo) choisi dans les réglages, sinon d'Open-Meteo s'il est activé.
+- **Mer** : choisissez un point juste au large ; les modèles de vagues ne couvrent pas l'intérieur des terres. Relu toutes les heures. Un échec d'Open-Meteo ne touche que les entités de mer.
+- Le résumé du jour gagne trois blocs : `fishing`, `marine`, `surge` (`null` quand la donnée n'est pas choisie). La carte, le tableau de bord et l'image les affichent sous le tableau de chaque port.
 
 Le marnage et le douzième sont recalculés toutes les 5 minutes ; Marées France est relue toutes les heures. Le **seuil des grandes marées** (100 par défaut) se règle dans les options : décembre 2026, par exemple, culmine à 99.
 

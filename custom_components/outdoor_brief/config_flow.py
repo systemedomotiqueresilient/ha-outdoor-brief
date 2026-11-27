@@ -13,8 +13,14 @@ from homeassistant.config_entries import (
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.selector import (
+    BooleanSelector,
     DeviceSelector,
     DeviceSelectorConfig,
+    EntityFilterSelectorConfig,
+    EntitySelector,
+    EntitySelectorConfig,
+    LocationSelector,
+    LocationSelectorConfig,
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
@@ -36,17 +42,24 @@ from .admin_phone import (
 )
 from .const import (
     CONF_EXTRA_TARGETS,
+    CONF_FISHING_DAYLIGHT,
+    CONF_FISHING_THRESHOLD,
     CONF_GROUPING,
     CONF_IMAGE_THEME,
+    CONF_MARINE_ENABLED,
+    CONF_MARINE_LOCATION,
     CONF_MESSAGE_STYLE,
     CONF_NOTIFY_FREQUENCY,
     CONF_NOTIFY_TIME,
     CONF_PORT_DEVICE,
+    CONF_PRESSURE_ENTITY,
     CONF_PROFILE,
     CONF_SPRING_THRESHOLD,
     CONF_TAP_URL,
     CONF_WATCH_MODE,
     CONF_WATCH_TARGET,
+    DEFAULT_FISHING_DAYLIGHT,
+    DEFAULT_FISHING_THRESHOLD,
     DEFAULT_IMAGE_THEME,
     DEFAULT_NEW_FREQUENCY,
     DEFAULT_NOTIFY_TIME,
@@ -57,8 +70,10 @@ from .const import (
     GROUPING_OWN,
     GROUPINGS,
     MAREES_DOMAIN,
+    MAX_FISHING_THRESHOLD,
     MAX_SPRING_THRESHOLD,
     MESSAGE_STYLES,
+    MIN_FISHING_THRESHOLD,
     MIN_SPRING_THRESHOLD,
     PROFILE_COASTAL,
     PROFILES_AVAILABLE,
@@ -67,6 +82,7 @@ from .const import (
     WATCH_MODES,
     WATCH_OFF,
 )
+from .marine import MarineError, async_fetch_marine
 
 
 def _settings_schema(
@@ -93,8 +109,78 @@ def _settings_schema(
                     options=choices, custom_value=True, mode=SelectSelectorMode.DROPDOWN
                 )
             ),
+            # Pêche à pied (0.4)
+            vol.Required(
+                CONF_FISHING_THRESHOLD,
+                default=options.get(CONF_FISHING_THRESHOLD, DEFAULT_FISHING_THRESHOLD),
+            ): NumberSelector(
+                NumberSelectorConfig(
+                    min=MIN_FISHING_THRESHOLD,
+                    max=MAX_FISHING_THRESHOLD,
+                    step=1,
+                    mode=NumberSelectorMode.BOX,
+                )
+            ),
+            vol.Required(
+                CONF_FISHING_DAYLIGHT,
+                default=options.get(CONF_FISHING_DAYLIGHT, DEFAULT_FISHING_DAYLIGHT),
+            ): BooleanSelector(),
+            # Surcote (0.4) : capteur de pression local, facultatif
+            vol.Optional(
+                CONF_PRESSURE_ENTITY,
+                description={"suggested_value": options.get(CONF_PRESSURE_ENTITY)},
+            ): EntitySelector(
+                EntitySelectorConfig(
+                    filter=[
+                        EntityFilterSelectorConfig(domain="sensor", device_class="pressure"),
+                        EntityFilterSelectorConfig(domain="weather"),
+                    ]
+                )
+            ),
         }
     )
+
+
+def _marine_schema(hass: HomeAssistant, options: dict[str, Any]) -> vol.Schema:
+    """Écran distinct d'Open-Meteo : désactivé par défaut, point en mer au choix."""
+    location = options.get(CONF_MARINE_LOCATION) or {
+        "latitude": hass.config.latitude,
+        "longitude": hass.config.longitude,
+    }
+    return vol.Schema(
+        {
+            vol.Required(
+                CONF_MARINE_ENABLED, default=bool(options.get(CONF_MARINE_ENABLED, False))
+            ): BooleanSelector(),
+            vol.Required(CONF_MARINE_LOCATION, default=location): LocationSelector(
+                LocationSelectorConfig(radius=False, icon="mdi:waves")
+            ),
+        }
+    )
+
+
+async def _check_marine(
+    hass: HomeAssistant, user_input: dict[str, Any]
+) -> tuple[dict[str, Any], dict[str, str]]:
+    """Activé : une requête d'essai vérifie qu'Open-Meteo répond pour ce point."""
+    values = {
+        CONF_MARINE_ENABLED: bool(user_input.get(CONF_MARINE_ENABLED)),
+        CONF_MARINE_LOCATION: {
+            "latitude": float(user_input[CONF_MARINE_LOCATION]["latitude"]),
+            "longitude": float(user_input[CONF_MARINE_LOCATION]["longitude"]),
+        },
+    }
+    if not values[CONF_MARINE_ENABLED]:
+        return values, {}
+    try:
+        await async_fetch_marine(
+            hass,
+            values[CONF_MARINE_LOCATION]["latitude"],
+            values[CONF_MARINE_LOCATION]["longitude"],
+        )
+    except MarineError as err:
+        return values, {"base": err.key}
+    return values, {}
 
 
 def _split(user_input: dict[str, Any]) -> tuple[dict[str, Any], str | None, dict[str, str]]:
@@ -105,6 +191,10 @@ def _split(user_input: dict[str, Any]) -> tuple[dict[str, Any], str | None, dict
     if raw and str(raw).strip() and not is_valid_target(raw):
         errors[CONF_ADMIN_NOTIFY_TARGET] = "invalid_target"
     values[CONF_SPRING_THRESHOLD] = int(values.get(CONF_SPRING_THRESHOLD, DEFAULT_SPRING_THRESHOLD))
+    values[CONF_FISHING_THRESHOLD] = int(
+        values.get(CONF_FISHING_THRESHOLD, DEFAULT_FISHING_THRESHOLD)
+    )
+    values[CONF_PRESSURE_ENTITY] = values.get(CONF_PRESSURE_ENTITY) or None  # effacé = aucun
     return values, normalize_target(raw), errors
 
 
@@ -282,15 +372,31 @@ class OutdoorBriefConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             values, errors = _check_notifications(user_input)
             if not errors:
+                self._options = {**self._options, **values}
+                return await self.async_step_marine()
+        return self.async_show_form(
+            step_id="notifications",
+            data_schema=self.add_suggested_values_to_schema(
+                _notifications_schema(self.hass, {}, DEFAULT_NEW_FREQUENCY), user_input or {}
+            ),
+            errors=errors,
+        )
+
+    async def async_step_marine(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        """Écran 5 : Open-Meteo, à part et désactivé par défaut."""
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            values, errors = await _check_marine(self.hass, user_input)
+            if not errors:
                 return self.async_create_entry(
                     title=self.context["title_placeholders"]["port"],
                     data=self._data,
                     options={**self._options, **values},
                 )
         return self.async_show_form(
-            step_id="notifications",
+            step_id="marine",
             data_schema=self.add_suggested_values_to_schema(
-                _notifications_schema(self.hass, {}, DEFAULT_NEW_FREQUENCY), user_input or {}
+                _marine_schema(self.hass, {}), user_input or {}
             ),
             errors=errors,
         )
@@ -303,7 +409,24 @@ class OutdoorBriefConfigFlow(ConfigFlow, domain=DOMAIN):
 
 class OutdoorBriefOptionsFlow(OptionsFlow):
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
-        return self.async_show_menu(step_id="init", menu_options=["settings", "notifications"])
+        return self.async_show_menu(
+            step_id="init", menu_options=["settings", "notifications", "marine"]
+        )
+
+    async def async_step_marine(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        options = dict(self.config_entry.options)
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            values, errors = await _check_marine(self.hass, user_input)
+            if not errors:
+                return self.async_create_entry(data={**options, **values})
+        return self.async_show_form(
+            step_id="marine",
+            data_schema=self.add_suggested_values_to_schema(
+                _marine_schema(self.hass, options), user_input or {}
+            ),
+            errors=errors,
+        )
 
     async def async_step_notifications(
         self, user_input: dict[str, Any] | None = None

@@ -26,11 +26,17 @@
         "description": "These settings can be changed later from the integration options.",
         "data": {
           "spring_tide_threshold": "Spring tide threshold (coefficient)",
-          "admin_notify_target": "Admin phone (optional)"
+          "admin_notify_target": "Admin phone (optional)",
+          "fishing_coefficient": "Shore fishing: minimum coefficient",
+          "fishing_daylight_only": "Shore fishing: daylight only",
+          "pressure_entity": "Pressure sensor for the storm surge (optional)"
         },
         "data_description": {
           "spring_tide_threshold": "A day counts as a spring tide when its highest coefficient reaches this value. 100 is the usual convention; lower it to be told about strong tides more often (December 2026 peaks at 99, for example).",
-          "admin_notify_target": "A notify.mobile_app_* service or a notify entity from the Companion app. Pre-filled with the phone already chosen in another SDR integration, if any. Used for notifications from version 0.3."
+          "admin_notify_target": "A notify.mobile_app_* service or a notify entity from the Companion app. Pre-filled with the phone already chosen in another SDR integration, if any. Used for notifications from version 0.3.",
+          "fishing_coefficient": "A shore fishing window surrounds a low tide whose coefficient reaches this value: from 2 hours before low water to 1 hour after. 70 is a common minimum; 90 and above uncover the most ground.",
+          "fishing_daylight_only": "Only keep windows whose low tide falls between sunrise and sunset (at the Home Assistant location).",
+          "pressure_entity": "A local pressure sensor or a weather entity. The storm surge is estimated from the inverse barometer effect: about 1 cm of water per hPa below 1013 hPa, wind not included. Empty: Open-Meteo's pressure is used if enabled, otherwise no surge entity."
         }
       },
       "notifications": {
@@ -58,13 +64,27 @@
           "message_style": "Short: only coefficients and next tide, when the summary image is attached (the image carries the details). Detailed: every tide in the text. A target that cannot receive the image (Telegram, ntfy, e-mail…) always gets the detailed text.",
           "extra_notify_targets": "Other phones or channels: any notify service or entity (another Companion phone, Telegram, Signal, ntfy, Gotify, e-mail…). Companion phones receive the image; other channels receive the title and detailed text."
         }
+      },
+      "marine": {
+        "title": "Sea conditions (Open-Meteo)",
+        "description": "Optional online service. Disabled, Outdoor Brief makes no Internet request at all. Enabled, it reads the waves, swell and water temperature every hour from Open-Meteo (free, no account, data under CC BY 4.0) for the point chosen below, and the sea-level pressure for the storm surge.",
+        "data": {
+          "marine_enabled": "Enable Open-Meteo",
+          "marine_location": "Point at sea"
+        },
+        "data_description": {
+          "marine_enabled": "Creates the wave, swell and water temperature entities. Disabling removes them.",
+          "marine_location": "Pick a point just off the coast: wave models do not cover inland areas or narrow estuaries. Defaults to the Home Assistant location."
+        }
       }
     },
     "error": {
       "invalid_target": "Enter a notify service or entity, e.g. notify.mobile_app_my_phone.",
       "watch_target_required": "Choose the watch's notify target, or set the watch to Off.",
       "invalid_tap_url": "Enter a path starting with /, e.g. /lovelace/0.",
-      "invalid_extra_target": "Each recipient must be a notify service or entity, e.g. notify.telegram."
+      "invalid_extra_target": "Each recipient must be a notify service or entity, e.g. notify.telegram.",
+      "marine_unreachable": "Open-Meteo did not answer. Check the Internet connection, or disable this option.",
+      "marine_no_data": "Open-Meteo has no wave data for this point: move it further out to sea."
     },
     "abort": {
       "already_configured": "This port is already configured.",
@@ -77,7 +97,8 @@
         "title": "Outdoor Brief",
         "menu_options": {
           "settings": "Settings (spring tide threshold, admin phone)",
-          "notifications": "Notifications (brief, time, image, watch)"
+          "notifications": "Notifications (brief, time, image, watch)",
+          "marine": "Sea conditions (Open-Meteo, optional)"
         }
       },
       "settings": {
@@ -85,11 +106,17 @@
         "description": "These settings can be changed later from the integration options.",
         "data": {
           "spring_tide_threshold": "Spring tide threshold (coefficient)",
-          "admin_notify_target": "Admin phone (optional)"
+          "admin_notify_target": "Admin phone (optional)",
+          "fishing_coefficient": "Shore fishing: minimum coefficient",
+          "fishing_daylight_only": "Shore fishing: daylight only",
+          "pressure_entity": "Pressure sensor for the storm surge (optional)"
         },
         "data_description": {
           "spring_tide_threshold": "A day counts as a spring tide when its highest coefficient reaches this value. 100 is the usual convention; lower it to be told about strong tides more often (December 2026 peaks at 99, for example).",
-          "admin_notify_target": "A notify.mobile_app_* service or a notify entity from the Companion app. Pre-filled with the phone already chosen in another SDR integration, if any. Used for notifications from version 0.3."
+          "admin_notify_target": "A notify.mobile_app_* service or a notify entity from the Companion app. Pre-filled with the phone already chosen in another SDR integration, if any. Used for notifications from version 0.3.",
+          "fishing_coefficient": "A shore fishing window surrounds a low tide whose coefficient reaches this value: from 2 hours before low water to 1 hour after. 70 is a common minimum; 90 and above uncover the most ground.",
+          "fishing_daylight_only": "Only keep windows whose low tide falls between sunrise and sunset (at the Home Assistant location).",
+          "pressure_entity": "A local pressure sensor or a weather entity. The storm surge is estimated from the inverse barometer effect: about 1 cm of water per hPa below 1013 hPa, wind not included. Empty: Open-Meteo's pressure is used if enabled, otherwise no surge entity."
         }
       },
       "notifications": {
@@ -117,13 +144,27 @@
           "message_style": "Short: only coefficients and next tide, when the summary image is attached (the image carries the details). Detailed: every tide in the text. A target that cannot receive the image (Telegram, ntfy, e-mail…) always gets the detailed text.",
           "extra_notify_targets": "Other phones or channels: any notify service or entity (another Companion phone, Telegram, Signal, ntfy, Gotify, e-mail…). Companion phones receive the image; other channels receive the title and detailed text."
         }
+      },
+      "marine": {
+        "title": "Sea conditions (Open-Meteo)",
+        "description": "Optional online service. Disabled, Outdoor Brief makes no Internet request at all. Enabled, it reads the waves, swell and water temperature every hour from Open-Meteo (free, no account, data under CC BY 4.0) for the point chosen below, and the sea-level pressure for the storm surge.",
+        "data": {
+          "marine_enabled": "Enable Open-Meteo",
+          "marine_location": "Point at sea"
+        },
+        "data_description": {
+          "marine_enabled": "Creates the wave, swell and water temperature entities. Disabling removes them.",
+          "marine_location": "Pick a point just off the coast: wave models do not cover inland areas or narrow estuaries. Defaults to the Home Assistant location."
+        }
       }
     },
     "error": {
       "invalid_target": "Enter a notify service or entity, e.g. notify.mobile_app_my_phone.",
       "watch_target_required": "Choose the watch's notify target, or set the watch to Off.",
       "invalid_tap_url": "Enter a path starting with /, e.g. /lovelace/0.",
-      "invalid_extra_target": "Each recipient must be a notify service or entity, e.g. notify.telegram."
+      "invalid_extra_target": "Each recipient must be a notify service or entity, e.g. notify.telegram.",
+      "marine_unreachable": "Open-Meteo did not answer. Check the Internet connection, or disable this option.",
+      "marine_no_data": "Open-Meteo has no wave data for this point: move it further out to sea."
     }
   },
   "selector": {
@@ -181,6 +222,33 @@
       },
       "admin_phone": {
         "name": "Admin phone"
+      },
+      "next_fishing_window": {
+        "name": "Next shore fishing window"
+      },
+      "storm_surge": {
+        "name": "Estimated storm surge"
+      },
+      "wave_height": {
+        "name": "Wave height"
+      },
+      "wave_period": {
+        "name": "Wave period"
+      },
+      "wave_direction": {
+        "name": "Wave direction"
+      },
+      "swell_height": {
+        "name": "Swell height"
+      },
+      "swell_period": {
+        "name": "Swell period"
+      },
+      "swell_direction": {
+        "name": "Swell direction"
+      },
+      "sea_temperature": {
+        "name": "Sea temperature"
       }
     },
     "image": {
@@ -201,6 +269,12 @@
     },
     "entry_not_loaded": {
       "message": "No Outdoor Brief entry is loaded."
+    },
+    "marine_unreachable": {
+      "message": "Open-Meteo did not answer: {error}"
+    },
+    "marine_no_data": {
+      "message": "Open-Meteo has no wave data for the chosen point: move it further out to sea in the options."
     }
   },
   "services": {

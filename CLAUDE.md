@@ -5,7 +5,9 @@ Intégration Home Assistant (domaine `outdoor_brief`). Le résumé du jour pour 
 ## Règles
 - **Données factuelles uniquement.** Pas de calendrier de jardinage lunaire (lune montante/descendante, jours racines/feuilles/fleurs/fruits) : on expose les grandeurs astronomiques, un tiers interprète.
 - **Les marées viennent de Marées France**, par `marees_france.get_tides_data` et `get_coefficients_data`, **toujours avec `device_id`** : sans lui, l'action répond pour un port par défaut. On n'interroge jamais le SHOM directement.
-- **Open-Meteo (0.4)** : écran de configuration distinct, désactivé par défaut ; désactivé = aucune requête, aucune entité houle.
+- **Open-Meteo (0.4)** : écran de configuration distinct (étape `marine`), désactivé par défaut ; désactivé = aucune requête, aucune entité houle. `MarineCoordinator` séparé (`coordinator.marine`), rafraîchi par `async_refresh` (jamais `first_refresh`) : un échec ne bloque pas les marées. Tests avec `aioclient_mock`.
+- **Pêche à pied (0.4)** : calcul pur dans `fishing.py` (2 h avant, 1 h après la basse mer ; coefficient = plus fort des pleines mers voisines). Soleil par `helpers.sun.get_astral_event_date` (astral, fourni par HA). Les tests placent HA à 47.0, -3.0 (point générique au large).
+- **Surcote (0.4)** : effet de baromètre inverse seulement (1 cm/hPa sous 1013,25). Pression : capteur local d'abord, sinon Open-Meteo. Roboto n'a ni « ≥ » ni « − » : écrire « ou plus » et « - ».
 - **On passe par l'appareil et le registre**, jamais par un `entity_id` de Marées France (renommable).
 - **Les entités ne sont créées que pour le profil et les données choisis.** Une source absente rend indisponibles seulement les entités qui en dépendent.
 - **Contrat public** : `unique_id` et attributs du résumé (`schema_version`). Un attribut n'est renommé ou supprimé qu'en version majeure, après une version où il est signalé obsolète.

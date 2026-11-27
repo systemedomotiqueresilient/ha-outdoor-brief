@@ -4,7 +4,7 @@ from datetime import timedelta
 from typing import Final
 
 DOMAIN: Final = "outdoor_brief"
-VERSION: Final = "0.3.5"  # identique à manifest.json et au fichier VERSION
+VERSION: Final = "0.4.0"  # identique à manifest.json et au fichier VERSION
 
 # Carte Lovelace (servie par l'intégration elle-même)
 FRONTEND_URL: Final = "/outdoor_brief_static"
@@ -91,3 +91,18 @@ CONF_TAP_URL: Final = "tap_url"
 EVENT_DAILY_SUMMARY: Final = f"{DOMAIN}_daily_summary"
 EVENT_SPRING_TIDE: Final = f"{DOMAIN}_spring_tide_upcoming"
 SERVICE_SEND_SUMMARY: Final = "send_summary"
+
+# Pêche à pied (0.4) : créneau de 2 h avant à 1 h après une basse mer au coefficient choisi
+CONF_FISHING_THRESHOLD: Final = "fishing_coefficient"
+DEFAULT_FISHING_THRESHOLD: Final = 70
+MIN_FISHING_THRESHOLD: Final = 20
+MAX_FISHING_THRESHOLD: Final = 120
+CONF_FISHING_DAYLIGHT: Final = "fishing_daylight_only"
+DEFAULT_FISHING_DAYLIGHT: Final = True
+
+# Surcote (0.4) : pression d'un capteur local, sinon d'Open-Meteo s'il est activé
+CONF_PRESSURE_ENTITY: Final = "pressure_entity"
+
+# Open-Meteo (0.4) : écran distinct, désactivé par défaut (désactivé = aucune requête)
+CONF_MARINE_ENABLED: Final = "marine_enabled"
+CONF_MARINE_LOCATION: Final = "marine_location"

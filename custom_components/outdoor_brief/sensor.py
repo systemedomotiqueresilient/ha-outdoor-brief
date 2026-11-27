@@ -14,7 +14,13 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import EntityCategory, UnitOfLength
+from homeassistant.const import (
+    DEGREE,
+    EntityCategory,
+    UnitOfLength,
+    UnitOfTemperature,
+    UnitOfTime,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -36,6 +42,8 @@ from .const import (
     VERSION,
 )
 from .coordinator import BriefData, OutdoorBriefCoordinator
+from .extras import daylight_only, fishing_threshold, has_pressure_source, pressure, windows
+from .marine import MarineCoordinator, MarineData, surge
 from .summary import build_summary
 from .tides import HIGH, TWELFTHS, spring_tides, surrounding, tidal_range, twelfth
 
@@ -149,10 +157,18 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     coordinator: OutdoorBriefCoordinator = entry.runtime_data
-    async_add_entities(
-        [BriefSensor(coordinator, entry, description) for description in SENSORS]
-        + [AdminPhoneSensor(entry)]
-    )
+    entities: list[SensorEntity] = [
+        BriefSensor(coordinator, entry, description) for description in SENSORS
+    ]
+    entities += [FishingSensor(coordinator, entry), AdminPhoneSensor(entry)]
+    # Entités créées seulement pour les données choisies (0.4)
+    if has_pressure_source(entry, coordinator):
+        entities.append(SurgeSensor(coordinator, entry))
+    if coordinator.marine is not None:
+        entities += [
+            MarineSensor(coordinator.marine, entry, description) for description in MARINE_SENSORS
+        ]
+    async_add_entities(entities)
 
 
 class BriefSensor(CoordinatorEntity[OutdoorBriefCoordinator], SensorEntity):
@@ -189,9 +205,15 @@ class BriefSensor(CoordinatorEntity[OutdoorBriefCoordinator], SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        attrs = self.entity_description.attrs_fn(self._snapshot())
-        if self.entity_description.key == "daily_summary":
-            attrs["report"] = report_info(self.hass, self._entry)  # 0.3.5 : ajout
+        if self.entity_description.key != "daily_summary":
+            return self.entity_description.attrs_fn(self._snapshot())
+        notifier = self.coordinator.notifier
+        attrs = (
+            notifier.summary(dt_util.now())  # avec les blocs de la 0.4
+            if notifier is not None
+            else self.entity_description.attrs_fn(self._snapshot())
+        )
+        attrs["report"] = report_info(self.hass, self._entry)  # 0.3.5 : ajout
         return attrs
 
 
@@ -219,3 +241,168 @@ class AdminPhoneSensor(SensorEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         return {ATTR_NOTIFY_SERVICE: self._target}
+
+
+class FishingSensor(CoordinatorEntity[OutdoorBriefCoordinator], SensorEntity):
+    """Début du prochain créneau de pêche à pied (0.4), avec les suivants en attributs."""
+
+    _attr_has_entity_name = True
+    _attr_translation_key = "next_fishing_window"
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+
+    def __init__(self, coordinator: OutdoorBriefCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator)
+        self._entry = entry
+        self._attr_unique_id = f"{entry.entry_id}_next_fishing_window"
+        self._attr_device_info = device_info(entry)
+
+    def _windows(self) -> list[Any]:
+        found = windows(self.hass, self._entry, self.coordinator, dt_util.now())
+        if daylight_only(self._entry):
+            found = [w for w in found if w.daylight is not False]
+        return found
+
+    @property
+    def native_value(self) -> datetime | None:
+        found = self._windows()
+        return found[0].start if found else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        found = self._windows()
+        first = found[0].as_dict() if found else {}
+        return {
+            "end": first.get("end"),
+            "low_tide": first.get("low_tide"),
+            "height": first.get("height"),
+            "coefficient": first.get("coefficient"),
+            "daylight": first.get("daylight"),
+            "threshold": fishing_threshold(self._entry),
+            "daylight_only": daylight_only(self._entry),
+            "upcoming": [w.as_dict() for w in found[:UPCOMING_SPRING_TIDES]],
+        }
+
+
+class SurgeSensor(CoordinatorEntity[OutdoorBriefCoordinator], SensorEntity):
+    """Surcote (+) ou décote (−) estimée par l'effet de baromètre inverse (0.4)."""
+
+    _attr_has_entity_name = True
+    _attr_translation_key = "storm_surge"
+    _attr_device_class = SensorDeviceClass.DISTANCE
+    _attr_native_unit_of_measurement = UnitOfLength.CENTIMETERS
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, coordinator: OutdoorBriefCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator)
+        self._entry = entry
+        self._attr_unique_id = f"{entry.entry_id}_storm_surge"
+        self._attr_device_info = device_info(entry)
+
+    def _surge(self) -> dict[str, Any] | None:
+        return surge(*pressure(self.hass, self._entry, self.coordinator))
+
+    @property
+    def available(self) -> bool:
+        return self._surge() is not None
+
+    @property
+    def native_value(self) -> int | None:
+        value = self._surge()
+        return value["height_cm"] if value else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        value = self._surge() or {}
+        return {key: val for key, val in value.items() if key != "height_cm"}
+
+
+@dataclass(frozen=True, kw_only=True)
+class MarineSensorDescription(SensorEntityDescription):
+    field: str
+
+
+MARINE_SENSORS: tuple[MarineSensorDescription, ...] = (
+    MarineSensorDescription(
+        key="wave_height",
+        translation_key="wave_height",
+        field="wave_height",
+        device_class=SensorDeviceClass.DISTANCE,
+        native_unit_of_measurement=UnitOfLength.METERS,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=1,
+    ),
+    MarineSensorDescription(
+        key="wave_period",
+        translation_key="wave_period",
+        field="wave_period",
+        device_class=SensorDeviceClass.DURATION,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=0,
+    ),
+    MarineSensorDescription(
+        key="wave_direction",
+        translation_key="wave_direction",
+        field="wave_direction",
+        native_unit_of_measurement=DEGREE,
+        suggested_display_precision=0,
+    ),
+    MarineSensorDescription(
+        key="swell_height",
+        translation_key="swell_height",
+        field="swell_height",
+        device_class=SensorDeviceClass.DISTANCE,
+        native_unit_of_measurement=UnitOfLength.METERS,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=1,
+    ),
+    MarineSensorDescription(
+        key="swell_period",
+        translation_key="swell_period",
+        field="swell_period",
+        device_class=SensorDeviceClass.DURATION,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=0,
+    ),
+    MarineSensorDescription(
+        key="swell_direction",
+        translation_key="swell_direction",
+        field="swell_direction",
+        native_unit_of_measurement=DEGREE,
+        suggested_display_precision=0,
+    ),
+    MarineSensorDescription(
+        key="sea_temperature",
+        translation_key="sea_temperature",
+        field="sea_temperature",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=1,
+    ),
+)
+
+
+class MarineSensor(CoordinatorEntity[MarineCoordinator], SensorEntity):
+    """Conditions de mer Open-Meteo au point choisi (créées seulement si activé)."""
+
+    _attr_has_entity_name = True
+    _attr_attribution = "Open-Meteo.com (CC BY 4.0)"
+    entity_description: MarineSensorDescription
+
+    def __init__(
+        self,
+        coordinator: MarineCoordinator,
+        entry: ConfigEntry,
+        description: MarineSensorDescription,
+    ) -> None:
+        super().__init__(coordinator)
+        self.entity_description = description
+        self._attr_unique_id = f"{entry.entry_id}_{description.key}"
+        self._attr_device_info = device_info(entry)
+
+    @property
+    def native_value(self) -> float | None:
+        data: MarineData | None = self.coordinator.data
+        return getattr(data, self.entity_description.field) if data else None
